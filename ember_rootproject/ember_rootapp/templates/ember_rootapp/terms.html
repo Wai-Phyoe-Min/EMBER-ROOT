@@ -1,0 +1,832 @@
+{% extends 'ember_rootapp/base.html' %}
+{% load static %}
+
+{% block title %}Terms of Service | EMBER & ROOT{% endblock %}
+{% block meta_description %}Our terms for ordering pizza, visiting our Karuizawa location, and using our services. Fair, transparent, and rooted in Japanese law.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Terms Page Specific Styles */
+    .terms-hero {
+        background: linear-gradient(135deg, var(--root) 0%, var(--charcoal) 100%);
+        padding: 5rem 0 3rem;
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+    
+    .terms-hero::before {
+        content: '⚖️';
+        position: absolute;
+        bottom: -50px;
+        right: -50px;
+        font-size: 250px;
+        opacity: 0.05;
+        pointer-events: none;
+        transform: rotate(-15deg);
+    }
+    
+    .terms-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 1.5rem;
+        border-radius: 30px;
+    }
+    
+    .terms-title {
+        font-size: 3.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+    
+    .terms-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.85;
+        max-width: 700px;
+    }
+    
+    .terms-meta {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .terms-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .terms-meta-item i {
+        font-size: 1.2rem;
+    }
+    
+    /* Table of Contents */
+    .toc-section-terms {
+        position: sticky;
+        top: 100px;
+    }
+    
+    .toc-card-terms {
+        background: white;
+        border: 1px solid var(--border-light);
+        padding: 1.75rem;
+        border-radius: 16px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+    }
+    
+    .toc-title-terms {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--ember);
+        display: inline-block;
+        color: var(--charcoal);
+    }
+    
+    .toc-list-terms {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .toc-list-terms li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .toc-list-terms a {
+        color: var(--ash);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0;
+        border-left: 2px solid transparent;
+        padding-left: 0.75rem;
+    }
+    
+    .toc-list-terms a:hover {
+        color: var(--ember);
+        border-left-color: var(--ember);
+        transform: translateX(4px);
+        font-weight: 500;
+    }
+    
+    .toc-list-terms a.active-toc {
+        color: var(--ember);
+        border-left-color: var(--ember);
+        font-weight: 600;
+        background: linear-gradient(90deg, rgba(211, 84, 0, 0.08) 0%, transparent 100%);
+    }
+    
+    .toc-list-terms a i {
+        font-size: 0.7rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .toc-list-terms a:hover i,
+    .toc-list-terms a.active-toc i {
+        opacity: 1;
+    }
+    
+    /* Content Sections */
+    .terms-section {
+        background: white;
+        border: 1px solid var(--border-light);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        border-radius: 16px;
+        scroll-margin-top: 100px;
+    }
+    
+    .terms-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        border-color: transparent;
+    }
+    
+    .terms-section-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--stone);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+        border-radius: 12px;
+    }
+    
+    .terms-section-icon i {
+        font-size: 1.5rem;
+        color: var(--ember);
+    }
+    
+    .terms-section h2 {
+        font-family: 'Newsreader', serif;
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--charcoal);
+    }
+    
+    .terms-section h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 1.5rem 0 0.75rem;
+        color: var(--ember);
+    }
+    
+    .terms-section p {
+        color: var(--ash);
+        line-height: 1.7;
+        margin-bottom: 1rem;
+    }
+    
+    .terms-section ul, .terms-section ol {
+        color: var(--ash);
+        line-height: 1.7;
+        padding-left: 1.25rem;
+    }
+    
+    .terms-section li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .highlight-box-terms {
+        background: var(--stone);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-left: 4px solid var(--ember);
+        border-radius: 0 12px 12px 0;
+    }
+    
+    .highlight-box-terms i {
+        color: var(--ember);
+        font-size: 1.2rem;
+        margin-right: 0.5rem;
+    }
+    
+    .warning-box {
+        background: #FFF3E0;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-left: 4px solid #FF9800;
+        border-radius: 0 12px 12px 0;
+    }
+    
+    .warning-box i {
+        color: #FF9800;
+        font-size: 1.2rem;
+        margin-right: 0.5rem;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .info-card-terms {
+        background: var(--stone);
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+        text-align: center;
+        border-radius: 12px;
+    }
+    
+    .info-card-terms:hover {
+        background: var(--ember);
+        color: white;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(211, 84, 0, 0.2);
+    }
+    
+    .info-card-terms:hover i,
+    .info-card-terms:hover .info-label,
+    .info-card-terms:hover p {
+        color: white;
+    }
+    
+    .info-card-terms i {
+        font-size: 2rem;
+        color: var(--ember);
+        margin-bottom: 0.75rem;
+        display: inline-block;
+    }
+    
+    .info-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--charcoal);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .info-card-terms p {
+        font-size: 0.8rem;
+        margin: 0;
+        color: var(--ash);
+    }
+    
+    .effective-date {
+        background: var(--charcoal);
+        color: white;
+        text-align: center;
+        padding: 1rem;
+        margin-top: 2rem;
+        border-radius: 12px;
+    }
+    
+    /* Acceptance Banner */
+    .acceptance-banner {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--charcoal);
+        color: white;
+        padding: 1rem;
+        z-index: 1001;
+        transform: translateY(100%);
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .acceptance-banner.show {
+        transform: translateY(0);
+    }
+    
+    @keyframes gentlePulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    
+    .accept-btn {
+        animation: gentlePulse 2s infinite;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .toc-section-terms {
+            position: static;
+            margin-bottom: 2rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .terms-title {
+            font-size: 2.25rem;
+        }
+        .terms-section {
+            padding: 1.5rem;
+        }
+        .terms-meta {
+            gap: 1rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .terms-hero {
+            padding: 3rem 0 2rem;
+        }
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="terms-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 text-center">
+                <div class="terms-badge">
+                    <i class="bi bi-file-text-fill"></i>
+                    <span>Legal Agreement</span>
+                </div>
+                <h1 class="terms-title">The fine print,<br>served straight up.</h1>
+                <p class="terms-subtitle mx-auto">No hidden ingredients. No confusing legal jargon. Just honest terms for honest pizza.</p>
+                
+                <div class="terms-meta justify-content-center">
+                    <div class="terms-meta-item">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Effective: April 11, 2026</span>
+                    </div>
+                    <div class="terms-meta-item">
+                        <i class="bi bi-journal-code"></i>
+                        <span>Governing Law: Japan</span>
+                    </div>
+                    <div class="terms-meta-item">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Version: 2.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Table of Contents Sidebar -->
+            <div class="col-lg-3">
+                <div class="toc-section-terms">
+                    <div class="toc-card-terms">
+                        <div class="toc-title-terms">Contents</div>
+                        <ul class="toc-list-terms" id="tocList">
+                            <li><a href="#agreement" class="toc-link"><i class="bi bi-chevron-right"></i> Agreement to Terms</a></li>
+                            <li><a href="#orders" class="toc-link"><i class="bi bi-chevron-right"></i> Ordering & Pickup</a></li>
+                            <li><a href="#pricing" class="toc-link"><i class="bi bi-chevron-right"></i> Pricing & Payment</a></li>
+                            <li><a href="#cancellations" class="toc-link"><i class="bi bi-chevron-right"></i> Cancellations & Refunds</a></li>
+                            <li><a href="#allergens" class="toc-link"><i class="bi bi-chevron-right"></i> Allergens & Dietary</a></li>
+                            <li><a href="#availability" class="toc-link"><i class="bi bi-chevron-right"></i> Availability</a></li>
+                            <li><a href="#conduct" class="toc-link"><i class="bi bi-chevron-right"></i> Customer Conduct</a></li>
+                            <li><a href="#intellectual" class="toc-link"><i class="bi bi-chevron-right"></i> Intellectual Property</a></li>
+                            <li><a href="#liability" class="toc-link"><i class="bi bi-chevron-right"></i> Limitation of Liability</a></li>
+                            <li><a href="#indemnification" class="toc-link"><i class="bi bi-chevron-right"></i> Indemnification</a></li>
+                            <li><a href="#termination" class="toc-link"><i class="bi bi-chevron-right"></i> Termination</a></li>
+                            <li><a href="#governing" class="toc-link"><i class="bi bi-chevron-right"></i> Governing Law</a></li>
+                            <li><a href="#disputes" class="toc-link"><i class="bi bi-chevron-right"></i> Dispute Resolution</a></li>
+                            <li><a href="#changes" class="toc-link"><i class="bi bi-chevron-right"></i> Changes to Terms</a></li>
+                            <li><a href="#contact" class="toc-link"><i class="bi bi-chevron-right"></i> Contact Information</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="toc-card-terms mt-4">
+                        <div class="text-center">
+                            <i class="bi bi-question-circle fs-1" style="color: var(--ember);"></i>
+                            <h5 class="mt-3" style="font-family: 'Newsreader', serif;">Questions?</h5>
+                            <p class="small text-muted">We're here to help clarify anything</p>
+                            <a href="#contact" class="btn btn-outline-ember btn-sm w-100 mt-2">Contact Us →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Terms Content -->
+            <div class="col-lg-9">
+                <!-- Agreement -->
+                <div id="agreement" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-hand-index-thumb-fill"></i>
+                    </div>
+                    <h2>Agreement to Terms</h2>
+                    <p>By accessing our website, placing an order, or visiting our physical location in Karuizawa, Nagano, you agree to be bound by these Terms of Service. If you disagree with any part of these Terms, please do not use our services.</p>
+                    
+                    <div class="highlight-box-terms">
+                        <i class="bi bi-building"></i>
+                        <strong>Ember & Root 合同会社</strong><br>
+                        〒389-0102 長野県北佐久郡軽井沢町
+                    </div>
+                    
+                    <p>These Terms constitute a legally binding agreement between you and Ember & Root. By using our services, you represent that you are at least 18 years of age or have parental consent.</p>
+                </div>
+                
+                <!-- Orders -->
+                <div id="orders" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-cart-check-fill"></i>
+                    </div>
+                    <h2>Ordering & Pickup</h2>
+                    <p>Our pizzas are made fresh, one at a time, in our 900°F wood-fired oven.</p>
+                    
+                    <div class="info-grid">
+                        <div class="info-card-terms">
+                            <i class="bi bi-clock"></i>
+                            <span class="info-label">Pickup Only</span>
+                            <p>We do not offer delivery. All orders are pickup from our Karuizawa location.</p>
+                        </div>
+                        <div class="info-card-terms">
+                            <i class="bi bi-hourglass-split"></i>
+                            <span class="info-label">Preparation Time</span>
+                            <p>Please allow 20-30 minutes for order preparation during peak hours.</p>
+                        </div>
+                        <div class="info-card-terms">
+                            <i class="bi bi-receipt"></i>
+                            <span class="info-label">Order Confirmation</span>
+                            <p>You will receive an email confirmation when your order is ready for pickup.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="warning-box">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Limited Quantities:</strong> Our dough is made fresh daily in limited quantities. We sell out most nights by 20:00.
+                    </div>
+                </div>
+                
+                <!-- Pricing -->
+                <div id="pricing" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-currency-yen"></i>
+                    </div>
+                    <h2>Pricing & Payment</h2>
+                    <p>All prices are listed in Japanese Yen (¥) and include applicable consumption tax.</p>
+                    
+                    <h3>Payment Methods</h3>
+                    <ul>
+                        <li><i class="bi bi-credit-card me-2"></i> Credit Cards (Visa, Mastercard, American Express, JCB)</li>
+                        <li><i class="bi bi-cash me-2"></i> Cash (in-person only)</li>
+                        <li><i class="bi bi-wallet2 me-2"></i> PayPay (Japanese mobile payment)</li>
+                    </ul>
+                    
+                    <div class="highlight-box-terms">
+                        <i class="bi bi-shield-check"></i>
+                        <strong>Secure Payments:</strong> All online payments are processed through PCI-DSS compliant payment gateways. We never store your full payment information.
+                    </div>
+                </div>
+                
+                <!-- Cancellations -->
+                <div id="cancellations" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                    <h2>Cancellations & Refunds</h2>
+                    
+                    <h3>Cancellation Policy</h3>
+                    <ul>
+                        <li><strong>Before preparation begins:</strong> Full refund available</li>
+                        <li><strong>After preparation begins:</strong> No refund</li>
+                        <li><strong>Order already picked up:</strong> No refunds or exchanges</li>
+                    </ul>
+                    
+                    <div class="highlight-box-terms">
+                        <i class="bi bi-heart-fill"></i>
+                        <strong>Our Promise:</strong> If something's wrong, tell us. We'd rather fix it than lose a customer.
+                    </div>
+                </div>
+                
+                <!-- Allergens -->
+                <div id="allergens" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <h2>Allergens & Dietary Information</h2>
+                    
+                    <div class="warning-box">
+                        <i class="bi bi-bandaid-fill"></i>
+                        <strong>Allergen Warning:</strong> Our kitchen handles wheat flour, dairy products, eggs, tree nuts, and soy. Cross-contamination is possible.
+                    </div>
+                    
+                    <p><strong>You are responsible for informing us of any allergies</strong> when placing your order.</p>
+                </div>
+                
+                <!-- Availability -->
+                <div id="availability" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-calendar-week-fill"></i>
+                    </div>
+                    <h2>Availability & Seasonal Changes</h2>
+                    <p>Our menu changes with the harvest. Some items are available only during specific seasons.</p>
+                    
+                    <div class="highlight-box-terms">
+                        <i class="bi bi-tree-fill"></i>
+                        <strong><span id="termsFarmCount">0</span> Partner Farms:</strong> If a farm can't deliver due to weather or crop conditions, that item may be temporarily unavailable.
+                    </div>
+                </div>
+                
+                <!-- Conduct -->
+                <div id="conduct" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h2>Customer Conduct</h2>
+                    <ul>
+                        <li>Please be respectful to our staff and other customers</li>
+                        <li>No outside food or drinks</li>
+                        <li>Smoking is prohibited</li>
+                        <li>Pets are not allowed inside (service animals excepted)</li>
+                    </ul>
+                </div>
+                
+                <!-- Intellectual Property -->
+                <div id="intellectual" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-c-circle"></i>
+                    </div>
+                    <h2>Intellectual Property</h2>
+                    <p>All content on our website is the property of Ember & Root and protected by Japanese and international copyright laws.</p>
+                    
+                    <div class="highlight-box-terms">
+                        <i class="bi bi-camera-fill"></i>
+                        <strong>Photos Welcome!</strong> We encourage you to take photos of your pizza and share them on social media. Just tag us!
+                    </div>
+                </div>
+                
+                <!-- Liability -->
+                <div id="liability" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-shield-shaded"></i>
+                    </div>
+                    <h2>Limitation of Liability</h2>
+                    <div class="warning-box">
+                        <i class="bi bi-fire"></i>
+                        <strong>Hot Food Warning:</strong> Our pizzas come straight from a 900°F oven. Please handle with care.
+                    </div>
+                </div>
+                
+                <!-- Indemnification -->
+                <div id="indemnification" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-shield-plus"></i>
+                    </div>
+                    <h2>Indemnification</h2>
+                    <p>You agree to indemnify and hold harmless Ember & Root from any claims arising from your violation of these Terms or use of our services.</p>
+                </div>
+                
+                <!-- Termination -->
+                <div id="termination" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-slash-circle"></i>
+                    </div>
+                    <h2>Termination</h2>
+                    <p>We reserve the right to terminate or suspend your access to our services immediately for violation of these Terms.</p>
+                </div>
+                
+                <!-- Governing Law -->
+                <div id="governing" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <h2>Governing Law</h2>
+                    <p>These Terms shall be governed by and construed in accordance with the laws of <strong>Japan</strong>.</p>
+                    
+                    <div class="highlight-box-terms">
+                        <i class="bi bi-bank2"></i>
+                        <strong>Jurisdiction:</strong> Any legal proceedings shall take place in the courts of Nagano Prefecture, Japan.
+                    </div>
+                </div>
+                
+                <!-- Disputes -->
+                <div id="disputes" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-chat-dots-fill"></i>
+                    </div>
+                    <h2>Dispute Resolution</h2>
+                    <p>We believe in talking things out—preferably over a pizza. Contact us directly to resolve any dispute informally.</p>
+                </div>
+                
+                <!-- Changes -->
+                <div id="changes" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <h2>Changes to Terms</h2>
+                    <p>We may update these Terms from time to time. Continued use of our services after changes constitutes acceptance.</p>
+                </div>
+                
+                <!-- Contact -->
+                <div id="contact" class="terms-section">
+                    <div class="terms-section-icon">
+                        <i class="bi bi-envelope-paper-fill"></i>
+                    </div>
+                    <h2>Contact Information</h2>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center gap-3 p-3 border rounded-3">
+                                <i class="bi bi-envelope-fill fs-3" style="color: var(--ember);"></i>
+                                <div>
+                                    <div class="small text-muted">Email</div>
+                                    <a href="mailto:legal@emberandroot.jp" class="text-decoration-none">legal@emberandroot.jp</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center gap-3 p-3 border rounded-3">
+                                <i class="bi bi-telephone-fill fs-3" style="color: var(--ember);"></i>
+                                <div>
+                                    <div class="small text-muted">Phone</div>
+                                    <a href="tel:+81267456789" class="text-decoration-none">+81 267-45-6789</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="effective-date">
+                    <i class="bi bi-check2-circle me-2"></i>
+                    By using Ember & Root services, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Acceptance Banner -->
+<div class="acceptance-banner" id="acceptanceBanner">
+    <div class="container">
+        <div class="row align-items-center g-3">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-file-text-fill fs-3"></i>
+                    <div>
+                        <strong>We've updated our Terms of Service.</strong>
+                        <p class="small mb-0 opacity-75">By continuing to use our services, you agree to our updated terms.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button class="btn btn-ember btn-sm accept-btn" id="acceptTermsBtn">I Agree</button>
+                <button class="btn btn-outline-light btn-sm ms-2" id="reviewTermsBtn">Review</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load dynamic farm count
+        function loadTermsFarmCount() {
+            fetch('/api/stats/')
+                .then(r => r.json())
+                .then(data => {
+                    const farmCount = data.farm_count || 0;
+                    const farmElement = document.getElementById('termsFarmCount');
+                    if (farmElement) {
+                        farmElement.textContent = farmCount;
+                    }
+                })
+                .catch(err => {
+                    console.log('Error loading farm count:', err);
+                });
+        }
+        
+        loadTermsFarmCount();
+        
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const sections = document.querySelectorAll('.terms-section');
+        
+        // Smooth scroll for TOC links
+        tocLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    const offset = 80;
+                    const elementPosition = targetElement.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.scrollY - offset;
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
+            });
+        });
+        
+        // Highlight active section in TOC
+        function updateActiveTocLink() {
+            let currentSection = '';
+            const scrollPosition = window.scrollY + 120;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionBottom = sectionTop + section.offsetHeight;
+                if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+            
+            tocLinks.forEach(link => {
+                link.classList.remove('active-toc');
+                const href = link.getAttribute('href').substring(1);
+                if (href === currentSection) {
+                    link.classList.add('active-toc');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', updateActiveTocLink);
+        window.addEventListener('load', updateActiveTocLink);
+        
+        // Fade-in animation
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '0';
+                    entry.target.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        entry.target.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }, 100);
+                    sectionObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        sections.forEach(section => {
+            section.style.opacity = '0';
+            sectionObserver.observe(section);
+        });
+        
+        // Quick contact button
+        const quickContactBtn = document.querySelector('.toc-card-terms .btn-outline-ember');
+        if (quickContactBtn) {
+            quickContactBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const contactSection = document.getElementById('contact');
+                if (contactSection) {
+                    const offset = 80;
+                    const elementPosition = contactSection.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.scrollY - offset;
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
+            });
+        }
+        
+        // Acceptance Banner
+        const banner = document.getElementById('acceptanceBanner');
+        const acceptBtn = document.getElementById('acceptTermsBtn');
+        const reviewBtn = document.getElementById('reviewTermsBtn');
+        
+        const hasAccepted = localStorage.getItem('termsAccepted') === 'true';
+        const acceptedVersion = localStorage.getItem('termsVersion');
+        const currentVersion = '2.0';
+        
+        if (!hasAccepted || acceptedVersion !== currentVersion) {
+            setTimeout(() => banner.classList.add('show'), 1000);
+        }
+        
+        acceptBtn.addEventListener('click', () => {
+            localStorage.setItem('termsAccepted', 'true');
+            localStorage.setItem('termsVersion', currentVersion);
+            banner.classList.remove('show');
+            if (typeof window.showToast === 'function') {
+                window.showToast('✅ Thank you for accepting our Terms of Service');
+            }
+        });
+        
+        reviewBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    });
+</script>
+{% endblock %}

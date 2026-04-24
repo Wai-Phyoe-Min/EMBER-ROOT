@@ -1,0 +1,1994 @@
+{% extends 'ember_rootapp/base.html' %}
+{% load static %}
+
+{% block title %}My Dashboard | EMBER & ROOT · Karuizawa{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard Specific Styles */
+    .dashboard-hero {
+        background: linear-gradient(135deg, var(--japan-indigo) 0%, var(--charcoal) 100%);
+        padding: 2rem 0 3rem;
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+    
+    .dashboard-hero::before {
+        content: '👤';
+        position: absolute;
+        bottom: -30px;
+        right: -20px;
+        font-size: 180px;
+        opacity: 0.05;
+        pointer-events: none;
+    }
+    
+    .welcome-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(10px);
+        padding: 0.4rem 1rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-radius: 30px;
+        margin-bottom: 1rem;
+    }
+    
+    .welcome-title {
+        font-size: 2.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .welcome-subtitle {
+        opacity: 0.8;
+        font-size: 0.95rem;
+    }
+    
+    /* Stats Cards */
+    .stat-card-dash {
+        background: white;
+        border: 1px solid var(--border-light);
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card-dash:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        border-color: transparent;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--stone);
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-icon i {
+        font-size: 1.5rem;
+        color: var(--ember);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        font-family: 'Newsreader', serif;
+        color: var(--charcoal);
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--ash);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    /* Navigation Tabs */
+    .dashboard-tabs {
+        background: white;
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-tabs .nav-link {
+        color: var(--ash);
+        border: none;
+        padding: 1rem 1.5rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+    
+    .dashboard-tabs .nav-link:hover {
+        color: var(--ember);
+    }
+    
+    .dashboard-tabs .nav-link.active {
+        color: var(--ember);
+        background: transparent;
+    }
+    
+    .dashboard-tabs .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--ember);
+        animation: slideIn 0.3s ease;
+    }
+
+    /* Message Card Styles */
+    .message-card {
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-light) !important;
+    }
+
+    .message-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+        border-color: transparent !important;
+    }
+    
+    @keyframes slideIn {
+        from { width: 0; }
+        to { width: 100%; }
+    }
+    
+    /* Profile Section */
+    .profile-card {
+        background: white;
+        border: 1px solid var(--border-light);
+        padding: 2rem;
+        border-radius: 16px;
+    }
+    
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, var(--ember), var(--wheat));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .profile-avatar span {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .profile-field {
+        margin-bottom: 1.25rem;
+    }
+    
+    .profile-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ash);
+        margin-bottom: 0.25rem;
+    }
+    
+    .profile-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .edit-btn {
+        background: none;
+        border: none;
+        color: var(--ember);
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    
+    .edit-btn:hover {
+        color: var(--ember-dark);
+    }
+    
+    /* Order History */
+    .order-card {
+        background: white;
+        border: 1px solid var(--border-light);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .order-card:hover {
+        transform: translateX(4px);
+        border-left-color: var(--ember);
+        border-left-width: 3px;
+    }
+    
+    .order-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        border-radius: 20px;
+    }
+    
+    .status-completed {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+    
+    .status-pending, .status-confirmed, .status-preparing, .status-ready {
+        background: #fff3e0;
+        color: #ed6c02;
+    }
+    
+    .status-cancelled {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+    
+    /* Favorites Section */
+    .favorite-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        z-index: 5;
+        border-radius: 999px;
+        border: 1.5px solid rgba(255,255,255,0.8);
+        background: rgba(255,255,255,0.72);
+        backdrop-filter: blur(12px);
+        color: var(--ember);
+        transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        cursor: pointer;
+        font-size: 1rem;
+        box-shadow: 0 18px 35px rgba(0, 0, 0, 0.12);
+    }
+
+    .favorite-btn:hover {
+        transform: translateY(-2px) scale(1.08);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+        background: rgba(255,255,255,0.92);
+    }
+
+    .favorite-btn.favorited {
+        background: linear-gradient(135deg, var(--ember), var(--wheat));
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 20px 45px rgba(211, 84, 0, 0.24);
+    }
+
+    .favorite-btn.favorited i {
+        animation: heartPulse 0.55s cubic-bezier(0.165, 0.84, 0.44, 1);
+        transform: scale(1.1);
+    }
+
+    @keyframes heartPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1.1); }
+    }
+
+    /* Modern Order Details */
+    .order-card-modern {
+        background: white;
+        border-radius: 20px;
+        padding: 0;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-light);
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .order-card-modern:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        border-color: transparent;
+    }
+
+    .order-header {
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .order-number {
+        font-family: 'Newsreader', serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--charcoal);
+    }
+
+    .order-date {
+        font-size: 0.8rem;
+        color: var(--ash);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .order-body {
+        padding: 1.5rem;
+    }
+
+    .order-items-list {
+        margin-bottom: 1.5rem;
+    }
+
+    .order-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed var(--border-light);
+    }
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+    .order-item-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .order-item-qty {
+        width: 32px;
+        height: 32px;
+        background: var(--stone);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--charcoal);
+    }
+
+    .order-item-name {
+        font-weight: 500;
+        color: var(--charcoal);
+    }
+
+    .order-item-price {
+        font-weight: 600;
+        color: var(--ember);
+    }
+
+    .order-footer {
+        padding: 1.25rem 1.5rem;
+        background: #fafbfc;
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .order-total {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--charcoal);
+    }
+
+    .order-total span {
+        font-size: 0.8rem;
+        color: var(--ash);
+        font-weight: 400;
+        margin-right: 0.5rem;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 1rem;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-badge.completed {
+        background: linear-gradient(135deg, #10b981, #34d399);
+        color: white;
+    }
+
+    .status-badge.confirmed {
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        color: white;
+    }
+
+    .status-badge.preparing {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        color: white;
+    }
+
+    .status-badge.ready {
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        color: white;
+    }
+
+    .status-badge.pending {
+        background: linear-gradient(135deg, #94a3b8, #cbd5e1);
+        color: white;
+    }
+
+    .status-badge.cancelled {
+        background: linear-gradient(135deg, #ef4444, #f87171);
+        color: white;
+    }
+
+    /* Order Actions */
+    .order-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-order-action {
+        padding: 0.5rem 1rem;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: white;
+        border: 1px solid var(--border-light);
+        color: var(--ash);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .btn-order-action:hover {
+        background: var(--ember);
+        border-color: var(--ember);
+        color: white;
+    }
+
+    /* Order Details Modal */
+    .order-details-modal .modal-content {
+        border-radius: 24px;
+        border: none;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .order-details-header {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, var(--japan-indigo) 0%, var(--charcoal) 100%);
+        color: white;
+    }
+
+    .order-details-body {
+        padding: 2rem;
+    }
+
+    .order-timeline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 2rem 0;
+        position: relative;
+    }
+
+    .order-timeline::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-light);
+        z-index: 0;
+    }
+
+    .timeline-step {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        flex: 1;
+    }
+
+    .timeline-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid var(--border-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        font-size: 1rem;
+        color: var(--ash);
+        transition: all 0.3s;
+    }
+
+    .timeline-step.completed .timeline-icon {
+        background: var(--ember);
+        border-color: var(--ember);
+        color: white;
+    }
+
+    .timeline-step.active .timeline-icon {
+        border-color: var(--ember);
+        color: var(--ember);
+        box-shadow: 0 0 0 4px rgba(211, 84, 0, 0.1);
+    }
+
+    .timeline-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ash);
+    }
+
+    .timeline-step.completed .timeline-label,
+    .timeline-step.active .timeline-label {
+        color: var(--charcoal);
+    }
+    
+    /* Modal Styles */
+    .modal-content-custom {
+        border-radius: 28px;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 26px 60px rgba(15, 23, 42, 0.18);
+    }
+
+    /* Loading Animation */
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 4px;
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    
+    /* Dashboard Toast */
+    .dashboard-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        padding: 0.9rem 1.2rem;
+        background: rgba(26, 26, 46, 0.95);
+        color: white;
+        border-radius: 18px;
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        transform: translateY(12px);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .welcome-title {
+            font-size: 1.6rem;
+        }
+        .stat-card-dash {
+            padding: 1rem;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+        }
+        .dashboard-tabs .nav-link {
+            padding: 0.75rem 1rem;
+            font-size: 0.8rem;
+        }
+        .profile-card {
+            padding: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .dashboard-hero {
+            padding: 1.5rem 0 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Hero -->
+<section class="dashboard-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="welcome-badge">
+                    <i class="bi bi-stars"></i>
+                    <span>Welcome Back</span>
+                </div>
+                <h1 class="welcome-title">Welcome back, {{ user.first_name|default:user.email }}!</h1>
+                <p class="welcome-subtitle">Your pizza journey at Ember & Root — track orders, earn rewards, and manage your account.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'contact' %}">
+                    <button class="btn btn-outline-light">
+                        <i class="bi bi-headset"></i> Need Help?
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Dashboard Content -->
+<section class="py-4">
+    <div class="container">
+        <!-- Stats Row -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3 col-6">
+                <div class="stat-card-dash">
+                    <div class="stat-icon">
+                        <i class="bi bi-cart-check-fill"></i>
+                    </div>
+                    <div class="stat-value" id="totalOrders">{{ total_orders }}</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card-dash">
+                    <div class="stat-icon">
+                        <i class="bi bi-pizza"></i>
+                    </div>
+                    <div class="stat-value" id="favoriteCount">{{ favorite_count }}</div>
+                    <div class="stat-label">Favorite Pizzas</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card-dash">
+                    <div class="stat-icon">
+                        <i class="bi bi-currency-yen"></i>
+                    </div>
+                    <div class="stat-value" id="totalSpent">¥{{ total_spent|floatformat:0 }}</div>
+                    <div class="stat-label">Total Spent</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card-dash">
+                    <div class="stat-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="stat-value" id="memberSinceValue">{{ member_since|date:"M Y" }}</div>
+                    <div class="stat-label">Member Since</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabs Navigation -->
+        <div class="dashboard-tabs">
+            <ul class="nav nav-tabs border-0" id="dashboardTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if active_tab != 'orders' and active_tab != 'favorites' and active_tab != 'settings' %}active{% endif %}" 
+                            id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                        <i class="bi bi-grid-3x3-gap-fill me-2"></i>Overview
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if active_tab == 'orders' %}active{% endif %}" 
+                            id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">
+                        <i class="bi bi-clock-history me-2"></i>Order History
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if active_tab == 'favorites' %}active{% endif %}" 
+                            id="favorites-tab" data-bs-toggle="tab" data-bs-target="#favorites" type="button" role="tab">
+                        <i class="bi bi-heart-fill me-2"></i>Favorites
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if active_tab == 'messages' %}active{% endif %}" 
+                            id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab">
+                        <i class="bi bi-envelope-fill me-2"></i>Messages
+                        {% if unread_replies_count > 0 %}
+                        <span class="badge bg-danger ms-2" style="font-size: 0.65rem;">{{ unread_replies_count }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if active_tab == 'settings' %}active{% endif %}" 
+                            id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+                        <i class="bi bi-gear-fill me-2"></i>Settings
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade {% if active_tab != 'orders' and active_tab != 'favorites' and active_tab != 'messages' and active_tab != 'settings' %}show active{% endif %}" 
+                id="overview" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <div class="profile-card">
+                            <div class="profile-avatar">
+                                <span>{{ user.get_avatar_initial }}</span>
+                            </div>
+                            <div class="profile-field">
+                                <div class="profile-label">Full Name</div>
+                                <div class="profile-value">
+                                    <span id="profileName">{{ user.first_name }} {{ user.last_name }}</span>
+                                    <button class="edit-btn" onclick="showEditModal('name')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="profile-field">
+                                <div class="profile-label">Email Address</div>
+                                <div class="profile-value">
+                                    <span id="profileEmail">{{ user.email }}</span>
+                                    <button class="edit-btn" onclick="showEditModal('email')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="profile-field">
+                                <div class="profile-label">Phone Number</div>
+                                <div class="profile-value">
+                                    <span id="profilePhone">{{ user.phone|default:"Not set" }}</span>
+                                    <button class="edit-btn" onclick="showEditModal('phone')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="profile-field">
+                                <div class="profile-label">Member Since</div>
+                                <div class="profile-value">
+                                    <span>{{ user.created_at|date:"F Y" }}</span>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="text-center">
+                                <button class="btn btn-outline-ember btn-sm" onclick="showEditModal('password')">
+                                    <i class="bi bi-key"></i> Change Password
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="profile-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 style="font-family: 'Newsreader', serif;">Recent Activity</h4>
+                            </div>
+                            <div id="recentActivity">
+                                {% if recent_activities %}
+                                    {% for activity in recent_activities %}
+                                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                        <div>
+                                            {% if activity.activity_type == 'login' %}
+                                                <i class="bi bi-box-arrow-in-right me-2" style="color: var(--ember);"></i>
+                                            {% elif activity.activity_type == 'order_placed' %}
+                                                <i class="bi bi-cart-check me-2" style="color: var(--ember);"></i>
+                                            {% elif activity.activity_type == 'profile_update' %}
+                                                <i class="bi bi-person me-2" style="color: var(--ember);"></i>
+                                            {% elif activity.activity_type == 'favorite_add' %}
+                                                <i class="bi bi-heart me-2" style="color: var(--ember);"></i>
+                                            {% else %}
+                                                <i class="bi bi-activity me-2" style="color: var(--ember);"></i>
+                                            {% endif %}
+                                            <span>{{ activity.description }}</span>
+                                            <div class="small text-muted">{{ activity.created_at|date:"M d, Y H:i" }}</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-muted">No recent activity</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div class="tab-pane fade {% if active_tab == 'orders' %}show active{% endif %}" id="orders" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="profile-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 style="font-family: 'Newsreader', serif;">Order History</h4>
+                                <select class="form-select w-auto" id="orderFilter">
+                                    <option value="all">All Orders</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="preparing">Preparing</option>
+                                </select>
+                            </div>
+                            <div id="ordersList">
+                                {% if recent_orders %}
+                                    {% for order in recent_orders %}
+                                    <div class="order-card-modern" data-status="{{ order.status }}">
+                                        <div class="order-header">
+                                            <div>
+                                                <div class="order-number">Order #{{ order.order_number }}</div>
+                                                <div class="order-date">
+                                                    <i class="bi bi-calendar3"></i>
+                                                    {{ order.created_at|date:"F d, Y • H:i" }}
+                                                </div>
+                                            </div>
+                                            <span class="status-badge {{ order.status }}">
+                                                {% if order.status == 'completed' %}
+                                                    <i class="bi bi-check-circle-fill"></i> Completed
+                                                {% elif order.status == 'confirmed' %}
+                                                    <i class="bi bi-check-circle"></i> Confirmed
+                                                {% elif order.status == 'preparing' %}
+                                                    <i class="bi bi-fire"></i> Preparing
+                                                {% elif order.status == 'ready' %}
+                                                    <i class="bi bi-box-seam"></i> Ready for Pickup
+                                                {% elif order.status == 'pending' %}
+                                                    <i class="bi bi-clock"></i> Pending
+                                                {% elif order.status == 'cancelled' %}
+                                                    <i class="bi bi-x-circle"></i> Cancelled
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="order-body">
+                                            <div class="order-items-list">
+                                                {% for item in order.items|slice:":3" %}
+                                                <div class="order-item">
+                                                    <div class="order-item-info">
+                                                        <span class="order-item-qty">{{ item.qty }}x</span>
+                                                        <span class="order-item-name">{{ item.name }}</span>
+                                                    </div>
+                                                    <span class="order-item-price">¥{{ item.price|floatformat:0 }}</span>
+                                                </div>
+                                                {% endfor %}
+                                                {% if order.items|length > 3 %}
+                                                <div class="order-item">
+                                                    <div class="order-item-info">
+                                                        <span class="order-item-qty">+{{ order.items|length|add:"-3" }}</span>
+                                                        <span class="order-item-name" style="color: var(--ash);">more items</span>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="order-footer">
+                                            <div class="order-total">
+                                                <span>Total</span> ¥{{ order.total|floatformat:0 }}
+                                            </div>
+                                            <div class="order-actions">
+                                                <button class="btn-order-action" onclick="viewOrderDetails('{{ order.order_number }}')">
+                                                    <i class="bi bi-eye"></i> View Details
+                                                </button>
+                                                {% if order.status != 'cancelled' and order.status != 'completed' %}
+                                                <button class="btn-order-action" onclick="trackOrder('{{ order.order_number }}')">
+                                                    <i class="bi bi-map"></i> Track
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-5">
+                                        <div style="width: 80px; height: 80px; background: var(--stone); border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                                            <i class="bi bi-receipt" style="font-size: 2rem; color: var(--ash);"></i>
+                                        </div>
+                                        <h5 style="color: var(--charcoal); font-weight: 600;">No orders yet</h5>
+                                        <p class="text-muted mt-2">Start your pizza journey with us!</p>
+                                        <a href="{% url 'menu' %}" class="btn btn-ember mt-3">
+                                            <i class="bi bi-pizza me-2"></i>Order Now
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Favorites Tab -->
+            <div class="tab-pane fade {% if active_tab == 'favorites' %}show active{% endif %}" id="favorites" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="profile-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 style="font-family: 'Newsreader', serif;">Your Favorite Pizzas</h4>
+                                <a href="{% url 'menu' %}">
+                                    <button class="btn btn-outline-ember btn-sm">
+                                        <i class="bi bi-plus-lg"></i> Add More
+                                    </button>
+                                </a>
+                            </div>
+                            <div id="favoritesList">
+                                {% if favorites %}
+                                    <div class="row g-4">
+                                        {% for favorite in favorites %}
+                                        <div class="col-md-6 col-lg-4">
+                                            <div class="pizza-card">
+                                                <div class="pizza-image-container">
+                                                    <button class="favorite-btn favorited" 
+                                                            data-pizza-id="{{ favorite.pizza.id }}" 
+                                                            data-pizza-name="{{ favorite.pizza.name }}"
+                                                            aria-label="Remove {{ favorite.pizza.name }} from favorites">
+                                                        <i class="bi bi-heart-fill"></i>
+                                                    </button>
+                                                    {% if favorite.pizza.image %}
+                                                    <img src="{{ favorite.pizza.image }}" alt="{{ favorite.pizza.name }} Pizza">
+                                                    {% else %}
+                                                    <img src="https://placehold.co/400x400/1E3F20/FFFFFF?text={{ favorite.pizza.name|urlencode }}" alt="{{ favorite.pizza.name }} Pizza">
+                                                    {% endif %}
+                                                </div>
+                                                <div class="pizza-content">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h3 class="pizza-title mb-0">{{ favorite.pizza.name }}</h3>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        {% for tag in favorite.pizza.get_dietary_tags %}
+                                                        <span class="dietary-badge">{{ tag }}</span>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <p class="pizza-description">{{ favorite.pizza.description }}</p>
+                                                    <div class="pizza-meta">
+                                                        <span><i class="bi bi-droplet"></i> {{ favorite.pizza.calories }} cal</span>
+                                                        <span><i class="bi bi-pin"></i> {{ favorite.pizza.farm|truncatechars:20 }}</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span class="pizza-price">¥{{ favorite.pizza.price|floatformat:0 }}</span>
+                                                        <button class="btn btn-ember add-to-cart-btn" 
+                                                                data-name="{{ favorite.pizza.name }}" 
+                                                                data-price="{{ favorite.pizza.price }}">
+                                                            ADD TO ORDER
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="bi bi-heart fs-1 text-muted"></i>
+                                        <p class="text-muted mt-2">No favorite pizzas yet</p>
+                                        <a href="{% url 'menu' %}" class="btn btn-ember btn-sm">Browse Menu</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Tab -->
+            <div class="tab-pane fade {% if active_tab == 'messages' %}show active{% endif %}" id="messages" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="profile-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 style="font-family: 'Newsreader', serif;">Support Replies</h4>
+                                <a href="{% url 'contact' %}" class="btn btn-outline-ember btn-sm">
+                                    <i class="bi bi-chat-dots me-2"></i>Contact Support
+                                </a>
+                            </div>
+                            <p class="text-muted small mb-4">
+                                <i class="bi bi-info-circle me-1"></i> 
+                                Replies to your inquiries will appear here. We typically respond within 24 hours.
+                            </p>
+                            <div id="messagesList">
+                                {% if user_messages %}
+                                    {% for msg in user_messages %}
+                                    <div class="message-card mb-4 p-4 border rounded-3" style="background: #fafbfc;">
+                                        <div class="d-flex align-items-start gap-3 mb-3">
+                                            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--ember), var(--wheat)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; flex-shrink: 0;">
+                                                <i class="bi bi-envelope-paper fs-5"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <h6 class="mb-1 fw-bold">
+                                                            {{ msg.get_subject_display }}
+                                                            {% if not msg.read_by_user %}
+                                                            <span class="badge bg-danger ms-2" style="font-size: 0.6rem;">NEW</span>
+                                                            {% endif %}
+                                                        </h6>
+                                                        <p class="small text-muted mb-2">
+                                                            <i class="bi bi-calendar3 me-1"></i>Replied on {{ msg.replied_at|date:"F d, Y" }}
+                                                        </p>
+                                                    </div>
+                                                    <span class="badge-status status-completed">
+                                                        <i class="bi bi-check-circle-fill me-1"></i>Replied
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Original Message -->
+                                        <div class="mb-3 p-3 rounded-3" style="background: #f0f2f5;">
+                                            <label class="text-uppercase small fw-bold text-secondary mb-2">
+                                                <i class="bi bi-chat-right-text me-1"></i>Your Message
+                                            </label>
+                                            <p class="mb-0 text-secondary" style="font-size: 0.9rem;">{{ msg.message }}</p>
+                                            <small class="text-muted mt-2 d-block">
+                                                Sent on {{ msg.created_at|date:"M d, Y" }}
+                                            </small>
+                                        </div>
+                                        
+                                        <!-- Reply -->
+                                        <div class="p-3 rounded-3" style="background: linear-gradient(135deg, #e8f5e9, #f1f8e9); border-left: 4px solid var(--ember);">
+                                            <label class="text-uppercase small fw-bold mb-2" style="color: var(--ember);">
+                                                <i class="bi bi-reply-fill me-1"></i>Reply from Ember & Root
+                                            </label>
+                                            <p class="mb-0" style="font-size: 0.95rem; line-height: 1.6;">{{ msg.reply }}</p>
+                                            {% if msg.replied_by %}
+                                            <small class="text-muted mt-2 d-block">
+                                                <i class="bi bi-person-check me-1"></i>Replied by {{ msg.replied_by.get_full_name|default:msg.replied_by.email }}
+                                            </small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="bi bi-envelope-paper fs-1 text-muted"></i>
+                                        <p class="text-muted mt-2">No support replies yet</p>
+                                        <p class="small text-muted">Have a question? We're here to help!</p>
+                                        <a href="{% url 'contact' %}" class="btn btn-ember btn-sm mt-2">
+                                            <i class="bi bi-chat-dots me-2"></i>Contact Support
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-pane fade {% if active_tab == 'settings' %}show active{% endif %}" id="settings" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="profile-card">
+                            <h4 style="font-family: 'Newsreader', serif; color: #dc3545;">Danger Zone</h4>
+                            <p class="text-muted small mt-3">Once you delete your account, there is no going back. Please be certain.</p>
+                            <button class="btn btn-danger" type="button" onclick="confirmDeleteAccount()">
+                                <i class="bi bi-trash"></i> Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalTitle">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" onsubmit="return false;">
+                    {% csrf_token %}
+                    <input type="hidden" id="editField" name="field">
+                    <div class="mb-3" id="currentPasswordGroup" style="display: none;">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" id="editFieldLabel">Value</label>
+                        <input type="text" class="form-control" id="editFieldValue">
+                    </div>
+                    <div class="mb-3" id="confirmPasswordGroup" style="display: none;">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirmPassword">
+                    </div>
+                    <div class="form-text text-muted small" id="passwordHint" style="display: none;">
+                        Use at least 6 characters, including letters and numbers for stronger security.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-ember" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-ember" onclick="saveProfileEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">Delete Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><strong>⚠️ WARNING: This action cannot be undone.</strong></p>
+                <p>Are you sure you want to permanently delete your account and all associated data?</p>
+                <div class="mb-3">
+                    <label class="form-label">Enter your password to confirm:</label>
+                    <input type="password" class="form-control" id="deletePassword" placeholder="Your password">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="deleteAccount()">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pass Django data to JavaScript -->
+{{ user_data|json_script:"userData" }}
+{{ stats_data|json_script:"statsData" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load PIZZAS immediately for cart pairing
+    (function ensurePizzasLoaded() {
+        const cached = localStorage.getItem('emberPizzasCache');
+        if (cached) {
+            try {
+                window.PIZZAS = JSON.parse(cached);
+            } catch(e) {}
+        }
+        
+        fetch('/api/pizzas/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.pizzas) {
+                    window.PIZZAS = data.pizzas;
+                    localStorage.setItem('emberPizzasCache', JSON.stringify(data.pizzas));
+                    if (typeof window.updateCartUI === 'function') {
+                        setTimeout(() => window.updateCartUI(), 50);
+                    }
+                }
+            })
+            .catch(err => console.log('Could not preload PIZZAS:', err));
+    })();
+
+    // Load PIZZAS data for dashboard
+    (function loadPizzasForDashboard() {
+        if (!window.PIZZAS || window.PIZZAS.length === 0) {
+            console.log('🔄 Loading PIZZAS for dashboard...');
+            fetch('/api/pizzas/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.pizzas) {
+                        window.PIZZAS = data.pizzas;
+                        localStorage.setItem('emberPizzasCache', JSON.stringify(data.pizzas));
+                        console.log('✅ PIZZAS loaded for dashboard:', window.PIZZAS.length);
+                    }
+                })
+                .catch(err => {
+                    console.log('❌ Could not load pizzas, trying cache...');
+                    const cached = localStorage.getItem('emberPizzasCache');
+                    if (cached) {
+                        try {
+                            window.PIZZAS = JSON.parse(cached);
+                            console.log('✅ PIZZAS loaded from cache');
+                        } catch(e) {}
+                    }
+                });
+        }
+    })();
+
+    // Parse Django data
+    const userData = JSON.parse(document.getElementById('userData').textContent);
+    const statsData = JSON.parse(document.getElementById('statsData').textContent);
+    
+    let currentEditField = '';
+    
+    // Show toast message
+    function showToast(message, isSuccess = true) {
+        const toast = document.createElement('div');
+        toast.className = 'dashboard-toast';
+        toast.textContent = message;
+        toast.style.background = isSuccess ? 'rgba(26, 26, 46, 0.95)' : '#dc3545';
+        document.body.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        });
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(12px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    // Show edit modal
+    function showEditModal(field) {
+        currentEditField = field;
+        const modal = new bootstrap.Modal(document.getElementById('editModal'));
+        
+        let title = '';
+        let label = '';
+        let currentValue = '';
+        let showPasswordFields = false;
+        let inputType = 'text';
+        
+        // Get current values from the DOM
+        switch(field) {
+            case 'name':
+                title = 'Edit Name';
+                label = 'Full Name';
+                const nameEl = document.getElementById('profileName');
+                currentValue = nameEl ? nameEl.textContent.trim() : (userData.full_name || '');
+                break;
+            case 'email':
+                title = 'Edit Email';
+                label = 'Email Address';
+                const emailEl = document.getElementById('profileEmail');
+                currentValue = emailEl ? emailEl.textContent.trim() : (userData.email || '');
+                inputType = 'email';
+                break;
+            case 'phone':
+                title = 'Edit Phone';
+                label = 'Phone Number';
+                const phoneEl = document.getElementById('profilePhone');
+                const phoneText = phoneEl ? phoneEl.textContent.trim() : (userData.phone || '');
+                currentValue = phoneText === 'Not set' ? '' : phoneText;
+                inputType = 'tel';
+                break;
+            case 'password':
+                title = 'Change Password';
+                label = 'New Password';
+                currentValue = '';
+                showPasswordFields = true;
+                inputType = 'password';
+                break;
+        }
+        
+        document.getElementById('editModalTitle').textContent = title;
+        document.getElementById('editFieldLabel').textContent = label;
+        document.getElementById('editField').value = field;
+        document.getElementById('editFieldValue').value = currentValue;
+        document.getElementById('editFieldValue').type = inputType;
+        
+        const currentPasswordGroup = document.getElementById('currentPasswordGroup');
+        const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+        const passwordHint = document.getElementById('passwordHint');
+        
+        if (showPasswordFields) {
+            currentPasswordGroup.style.display = 'block';
+            confirmPasswordGroup.style.display = 'block';
+            passwordHint.style.display = 'block';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        } else {
+            currentPasswordGroup.style.display = 'none';
+            confirmPasswordGroup.style.display = 'none';
+            passwordHint.style.display = 'none';
+        }
+        
+        modal.show();
+    }
+    
+    // Save profile edit
+    async function saveProfileEdit() {
+        const field = document.getElementById('editField').value;
+        const value = document.getElementById('editFieldValue').value;
+        const currentPassword = document.getElementById('currentPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        // Validation
+        if (!value) {
+            showToast('Please enter a value', false);
+            return;
+        }
+        
+        if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            showToast('Please enter a valid email address', false);
+            return;
+        }
+        
+        if (field === 'password') {
+            if (!currentPassword) {
+                showToast('Please enter your current password', false);
+                return;
+            }
+            if (value.length < 6) {
+                showToast('Password must be at least 6 characters', false);
+                return;
+            }
+            if (value !== confirmPassword) {
+                showToast('Passwords do not match', false);
+                return;
+            }
+        }
+        
+        // Prepare data
+        const data = { field, value };
+        if (field === 'password') {
+            data.current_password = currentPassword;
+        }
+        
+        // Determine endpoint
+        let endpoint = '/ajax/update-profile/';
+        if (field === 'email') endpoint = '/ajax/update-email/';
+        if (field === 'password') endpoint = '/ajax/change-password/';
+        
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast(result.message);
+                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                
+                // Update UI
+                if (field === 'name') {
+                    document.getElementById('profileName').textContent = value;
+                    document.querySelector('.welcome-title').innerHTML = `Welcome back, ${value.split(' ')[0]}!`;
+                    document.querySelector('.profile-avatar span').textContent = value.charAt(0).toUpperCase();
+                } else if (field === 'email') {
+                    document.getElementById('profileEmail').textContent = value;
+                } else if (field === 'phone') {
+                    document.getElementById('profilePhone').textContent = value;
+                }
+            } else {
+                showToast(result.message, false);
+            }
+        } catch (error) {
+            showToast('An error occurred. Please try again.', false);
+        }
+    }
+    
+    // Remove favorite
+    async function removeFavorite(pizzaId, pizzaName) {
+        try {
+            const response = await fetch(`/ajax/favorite/${pizzaId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.showToast(`❤️ Removed ${pizzaName} from favorites`, 'success', 'Favorites Updated');
+                // Reload favorites tab or remove element
+                setTimeout(() => location.reload(), 800);
+            } else {
+                window.showToast(result.message, 'error', 'Error');
+            }
+        } catch (error) {
+            window.showToast('An error occurred', 'error', 'Error');
+        }
+    }
+    
+    // Update notification settings
+    async function updateNotificationSetting(type, enabled) {
+        try {
+            const response = await fetch('/ajax/update-profile/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    field: type === 'email' ? 'email_notifications' : 'sms_notifications',
+                    value: enabled
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showToast(`${type === 'email' ? 'Email' : 'SMS'} notifications ${enabled ? 'enabled' : 'disabled'}`);
+            }
+        } catch (error) {
+            showToast('Failed to update setting', false);
+        }
+    }
+
+    // Override showToast for dashboard to use modern toast
+    const originalShowToast = window.showToast;
+    window.showToast = function(msg, isSuccess = true) {
+        if (typeof originalShowToast === 'function') {
+            originalShowToast(msg, isSuccess ? 'success' : 'error');
+        } else {
+            // Fallback
+            alert(msg);
+        }
+    };
+    
+    // Confirm delete account
+    function confirmDeleteAccount() {
+        const modal = new bootstrap.Modal(document.getElementById('deleteAccountModal'));
+        modal.show();
+    }
+
+    // View order details
+    function viewOrderDetails(orderNumber) {
+        // Find the order card
+        const orderCard = Array.from(document.querySelectorAll('.order-card-modern')).find(
+            card => card.querySelector('.order-number')?.textContent.includes(orderNumber)
+        );
+        
+        if (!orderCard) {
+            window.showToast('Order details not found', 'error', 'Error');
+            return;
+        }
+        
+        // Get order data from the card
+        const orderDate = orderCard.querySelector('.order-date')?.textContent.trim() || '';
+        const orderStatus = orderCard.dataset.status || 'pending';
+        const orderTotal = orderCard.querySelector('.order-total')?.textContent.trim() || '';
+        
+        // Get items
+        const items = [];
+        orderCard.querySelectorAll('.order-item').forEach(item => {
+            const qty = item.querySelector('.order-item-qty')?.textContent.trim() || '';
+            const name = item.querySelector('.order-item-name')?.textContent.trim() || '';
+            const price = item.querySelector('.order-item-price')?.textContent.trim() || '';
+            if (name && !name.includes('more items')) {
+                items.push({ qty, name, price });
+            }
+        });
+        
+        // Create modal HTML
+        const modalHtml = `
+            <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+                        <div class="order-details-header">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h5 class="modal-title text-white mb-1" style="font-size: 1.3rem;">
+                                        Order #${orderNumber}
+                                    </h5>
+                                    <p class="text-white-50 small mb-0">${orderDate}</p>
+                                </div>
+                                <span class="status-badge ${orderStatus}">
+                                    ${getStatusIcon(orderStatus)} ${orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="order-details-body">
+                            <!-- Order Timeline -->
+                            <div class="order-timeline">
+                                ${getTimelineHtml(orderStatus)}
+                            </div>
+                            
+                            <!-- Order Items -->
+                            <h6 class="fw-bold text-uppercase small mb-3" style="color: var(--ember);">
+                                <i class="bi bi-basket me-2"></i>Order Items
+                            </h6>
+                            <div class="order-items-list-full mb-4">
+                                ${items.map(item => `
+                                    <div class="order-item">
+                                        <div class="order-item-info">
+                                            <span class="order-item-qty">${item.qty}</span>
+                                            <span class="order-item-name">${item.name}</span>
+                                        </div>
+                                        <span class="order-item-price">${item.price}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <div class="border-top pt-3">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">Total</span>
+                                    <span class="fw-bold" style="color: var(--ember); font-size: 1.2rem;">${orderTotal}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Pickup Info -->
+                            <div class="pickup-info-box mt-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-shop" style="color: var(--ember); font-size: 1.5rem;"></i>
+                                    <div>
+                                        <strong>Pickup Location</strong>
+                                        <p class="mb-0 small text-muted">EMBER & ROOT · Karuizawa, Nagano</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius: 50px;">
+                                Close
+                            </button>
+                            ${orderStatus !== 'completed' && orderStatus !== 'cancelled' ? `
+                            <button type="button" class="btn btn-ember px-4" onclick="trackOrder('${orderNumber}')" style="border-radius: 50px;">
+                                <i class="bi bi-map me-2"></i>Track Order
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('orderDetailsModal');
+        if (existingModal) existingModal.remove();
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+        modal.show();
+    }
+
+    // Helper function for status icon
+    function getStatusIcon(status) {
+        const icons = {
+            'completed': '<i class="bi bi-check-circle-fill"></i>',
+            'confirmed': '<i class="bi bi-check-circle"></i>',
+            'preparing': '<i class="bi bi-fire"></i>',
+            'ready': '<i class="bi bi-box-seam"></i>',
+            'pending': '<i class="bi bi-clock"></i>',
+            'cancelled': '<i class="bi bi-x-circle"></i>'
+        };
+        return icons[status] || '<i class="bi bi-circle"></i>';
+    }
+
+    // Helper function for timeline
+    function getTimelineHtml(status) {
+        const steps = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+        const statusIndex = steps.indexOf(status);
+        
+        return steps.map((step, index) => {
+            let stepClass = '';
+            if (index < statusIndex) stepClass = 'completed';
+            else if (index === statusIndex) stepClass = 'active';
+            
+            const labels = {
+                'pending': 'Order Placed',
+                'confirmed': 'Confirmed',
+                'preparing': 'Preparing',
+                'ready': 'Ready',
+                'completed': 'Completed'
+            };
+            
+            return `
+                <div class="timeline-step ${stepClass}">
+                    <div class="timeline-icon">
+                        ${index < statusIndex ? '✓' : (index === statusIndex ? '●' : '○')}
+                    </div>
+                    <div class="timeline-label">${labels[step]}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Track order function
+    function trackOrder(orderNumber) {
+        // Show tracking information
+        const trackingInfo = {
+            'confirmed': 'Your order has been confirmed and is being prepared.',
+            'preparing': '🔥 Your pizza is in the oven! Our chef is working on it.',
+            'ready': '🍕 Your order is ready for pickup! Please come to the counter.',
+            'completed': '✅ Order completed. Thank you for dining with us!',
+            'pending': '⏳ Your order is pending confirmation.',
+            'cancelled': '❌ This order has been cancelled.'
+        };
+        
+        // Find order status
+        const orderCard = Array.from(document.querySelectorAll('.order-card-modern')).find(
+            card => card.querySelector('.order-number')?.textContent.includes(orderNumber)
+        );
+        
+        const status = orderCard?.dataset.status || 'pending';
+        const message = trackingInfo[status] || 'Tracking information not available.';
+        
+        window.showToast(message, 'info', `📍 Order #${orderNumber}`);
+    }
+    
+    // Delete account
+    async function deleteAccount() {
+        const password = document.getElementById('deletePassword').value;
+        
+        if (!password) {
+            showToast('Please enter your password', false);
+            return;
+        }
+        
+        try {
+            const response = await fetch('/ajax/delete-account/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ password })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast(result.message);
+                setTimeout(() => {
+                    window.location.href = result.redirect_url || '/';
+                }, 1500);
+            } else {
+                showToast(result.message, false);
+            }
+        } catch (error) {
+            showToast('An error occurred', false);
+        }
+    }
+    
+    // Order filter
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderFilter = document.getElementById('orderFilter');
+        if (orderFilter) {
+            orderFilter.addEventListener('change', function() {
+                const filter = this.value;
+                const orderCards = document.querySelectorAll('.order-card-modern');
+                
+                orderCards.forEach(card => {
+                    const status = card.dataset.status;
+                    if (filter === 'all' || status === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // Show message if no orders match filter
+                const visibleOrders = Array.from(orderCards).filter(card => card.style.display !== 'none');
+                const ordersList = document.getElementById('ordersList');
+                
+                if (visibleOrders.length === 0 && orderCards.length > 0) {
+                    let noOrdersMsg = ordersList.querySelector('.no-orders-filter-message');
+                    if (!noOrdersMsg) {
+                        noOrdersMsg = document.createElement('div');
+                        noOrdersMsg.className = 'no-orders-filter-message text-center py-5';
+                        noOrdersMsg.innerHTML = `
+                            <div style="width: 80px; height: 80px; background: var(--stone); border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                                <i class="bi bi-filter" style="font-size: 2rem; color: var(--ash);"></i>
+                            </div>
+                            <h5 style="color: var(--charcoal); font-weight: 600;">No ${filter} orders</h5>
+                            <p class="text-muted mt-2">Try selecting a different filter</p>
+                        `;
+                        ordersList.appendChild(noOrdersMsg);
+                    }
+                } else {
+                    const noOrdersMsg = ordersList.querySelector('.no-orders-filter-message');
+                    if (noOrdersMsg) noOrdersMsg.remove();
+                }
+            });
+        }
+        
+        // Attach favorite button events
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const pizzaId = this.dataset.pizzaId;
+                const pizzaName = this.dataset.pizzaName;
+                removeFavorite(pizzaId, pizzaName);
+            });
+        });
+        
+        // Attach add to cart events
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const name = this.dataset.name;
+                const price = parseFloat(this.dataset.price);
+                
+                if (typeof window.addToCart === 'function') {
+                    window.addToCart(name, price);
+                } else {
+                    showToast(`🍕 Added ${name} to cart (¥${price.toLocaleString()})`);
+                }
+            });
+        });
+
+        // Load PIZZAS data for dashboard if not already available
+        if (!window.PIZZAS) {
+            fetch('/api/pizzas/')
+                .then(response => response.json())
+                .then(data => {
+                    window.PIZZAS = data.pizzas || [];
+                    console.log('PIZZAS loaded for dashboard:', window.PIZZAS.length);
+                    // After loading PIZZAS, try to load favorites
+                    loadFavoritesIfNeeded();
+                })
+                .catch(err => console.log('Could not load pizzas:', err));
+        } else {
+            // PIZZAS already available, load favorites
+            loadFavoritesIfNeeded();
+        }
+
+        // Load favorites from server and localStorage
+        async function loadAllFavorites() {
+            const favoritesList = document.getElementById('favoritesList');
+            
+            // First try to get from server
+            try {
+                const response = await fetch('/ajax/favorites/');
+                const data = await response.json();
+                
+                if (data.success && data.favorites && data.favorites.length > 0) {
+                    displayFavorites(data.favorites);
+                    return;
+                }
+            } catch (err) {
+                console.log('Could not load favorites from server, using localStorage');
+            }
+            
+            // Fallback to localStorage
+            const storedFavorites = JSON.parse(localStorage.getItem('emberFavorites') || '[]');
+            if (storedFavorites.length > 0 && window.PIZZAS) {
+                const favoritePizzas = window.PIZZAS.filter(p => storedFavorites.includes(p.name));
+                if (favoritePizzas.length > 0) {
+                    displayFavorites(favoritePizzas);
+                }
+            }
+        }
+
+        function displayFavorites(favorites) {
+            const favoritesList = document.getElementById('favoritesList');
+            
+            let html = '<div class="row g-4">';
+            favorites.forEach(pizza => {
+                const dietaryTags = (pizza.dietary || []).map(d => 
+                    `<span class="dietary-badge">${d}</span>`
+                ).join('');
+                
+                html += `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="pizza-card">
+                            <div class="pizza-image-container">
+                                <button class="favorite-btn favorited" 
+                                        data-pizza-id="${pizza.id}" 
+                                        data-pizza-name="${pizza.name}">
+                                    <i class="bi bi-heart-fill"></i>
+                                </button>
+                                <img src="${pizza.image || 'https://placehold.co/400x400/1E3F20/FFFFFF?text=' + encodeURIComponent(pizza.name)}" alt="${pizza.name}">
+                            </div>
+                            <div class="pizza-content">
+                                <h3 class="pizza-title">${pizza.name}</h3>
+                                <div class="mb-2">${dietaryTags}</div>
+                                <p class="pizza-description">${pizza.description || ''}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="pizza-price">¥${pizza.price.toLocaleString()}</span>
+                                    <button class="btn btn-ember add-to-cart-btn" 
+                                            data-name="${pizza.name}" 
+                                            data-price="${pizza.price}">
+                                        ADD TO ORDER
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            favoritesList.innerHTML = html;
+            
+            attachFavoriteEvents();
+        }
+
+        function attachFavoriteEvents() {
+            document.querySelectorAll('#favoritesList .favorite-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const pizzaId = this.dataset.pizzaId;
+                    const pizzaName = this.dataset.pizzaName;
+                    removeFavorite(pizzaId, pizzaName);
+                });
+            });
+            
+            document.querySelectorAll('#favoritesList .add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const name = this.dataset.name;
+                    const price = parseFloat(this.dataset.price);
+                    
+                    if (typeof window.addToCart === 'function') {
+                        window.addToCart(name, price);
+                    }
+                });
+            });
+        }
+
+        function loadFavoritesIfNeeded() {
+            // Only load if favorites tab exists and we're on the page
+            const favoritesList = document.getElementById('favoritesList');
+            if (favoritesList) {
+                // Check if favorites tab is active or if the list is empty
+                const favoritesTab = document.getElementById('favorites');
+                const hasContent = favoritesList.querySelector('.pizza-card') !== null;
+                
+                if ((favoritesTab && favoritesTab.classList.contains('active')) || !hasContent) {
+                    loadAllFavorites();
+                }
+            }
+        }
+
+        // Call this when favorites tab is shown
+        document.querySelector('#favorites-tab')?.addEventListener('shown.bs.tab', loadAllFavorites);
+        
+        // Also load if favorites tab is active on page load
+        if (document.querySelector('#favorites')?.classList.contains('active')) {
+            loadAllFavorites();
+        }
+
+    });
+
+    // Make these functions available globally for the favorites tab
+    window.loadAllFavorites = async function() {
+        const favoritesList = document.getElementById('favoritesList');
+        
+        try {
+            const response = await fetch('/ajax/favorites/');
+            const data = await response.json();
+            
+            if (data.success && data.favorites && data.favorites.length > 0) {
+                displayFavoritesGlobal(data.favorites);
+                return;
+            }
+        } catch (err) {
+            console.log('Could not load favorites from server');
+        }
+        
+        const storedFavorites = JSON.parse(localStorage.getItem('emberFavorites') || '[]');
+        if (storedFavorites.length > 0 && window.PIZZAS) {
+            const favoritePizzas = window.PIZZAS.filter(p => storedFavorites.includes(p.name));
+            if (favoritePizzas.length > 0) {
+                displayFavoritesGlobal(favoritePizzas);
+            }
+        }
+    };
+
+    function displayFavoritesGlobal(favorites) {
+        const favoritesList = document.getElementById('favoritesList');
+        
+        let html = '<div class="row g-4">';
+        favorites.forEach(pizza => {
+            const dietaryTags = (pizza.dietary || []).map(d => 
+                `<span class="dietary-badge">${d}</span>`
+            ).join('');
+            
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="pizza-card">
+                        <div class="pizza-image-container">
+                            <button class="favorite-btn favorited" 
+                                    data-pizza-id="${pizza.id}" 
+                                    data-pizza-name="${pizza.name}">
+                                <i class="bi bi-heart-fill"></i>
+                            </button>
+                            <img src="${pizza.image || 'https://placehold.co/400x400/1E3F20/FFFFFF?text=' + encodeURIComponent(pizza.name)}" alt="${pizza.name}">
+                        </div>
+                        <div class="pizza-content">
+                            <h3 class="pizza-title">${pizza.name}</h3>
+                            <div class="mb-2">${dietaryTags}</div>
+                            <p class="pizza-description">${pizza.description || ''}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="pizza-price">¥${pizza.price.toLocaleString()}</span>
+                                <button class="btn btn-ember add-to-cart-btn" 
+                                        data-name="${pizza.name}" 
+                                        data-price="${pizza.price}">
+                                    ADD TO ORDER
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        favoritesList.innerHTML = html;
+        
+        // Re-attach events
+        document.querySelectorAll('#favoritesList .favorite-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const pizzaId = this.dataset.pizzaId;
+                const pizzaName = this.dataset.pizzaName;
+                removeFavorite(pizzaId, pizzaName);
+            });
+        });
+        
+        document.querySelectorAll('#favoritesList .add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const name = this.dataset.name;
+                const price = parseFloat(this.dataset.price);
+                if (typeof window.addToCart === 'function') {
+                    window.addToCart(name, price);
+                }
+            });
+        });
+    }
+
+    // Mark messages as read when Messages tab is clicked
+    document.addEventListener('DOMContentLoaded', function() {
+        const messagesTab = document.getElementById('messages-tab');
+        
+        if (messagesTab) {
+            messagesTab.addEventListener('click', function() {
+                // Only call if there's an unread badge
+                const badge = this.querySelector('.badge');
+                if (badge) {
+                    fetch('/ajax/mark-messages-read/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.marked_read > 0) {
+                            // Remove the badge
+                            badge.remove();
+                            
+                            // Update the message count display
+                            const countElement = document.querySelector('.message-count-display');
+                            if (countElement) {
+                                countElement.textContent = '0';
+                            }
+                        }
+                    })
+                    .catch(error => console.log('Error marking messages as read:', error));
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

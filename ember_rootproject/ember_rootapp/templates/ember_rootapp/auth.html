@@ -1,0 +1,1193 @@
+{% extends 'ember_rootapp/base.html' %}
+{% load static %}
+
+{% block title %}Sign In | EMBER & ROOT · Karuizawa{% endblock %}
+
+{% block extra_css %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+    }
+    
+    .auth-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        overflow: hidden;
+    }
+    
+    .bg-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        animation: floatOrb 20s infinite ease-in-out;
+    }
+    
+    .bg-orb-1 {
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, #D35400, transparent);
+        top: -200px;
+        right: -100px;
+        animation-delay: 0s;
+    }
+    
+    .bg-orb-2 {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #E8C07A, transparent);
+        bottom: -150px;
+        left: -100px;
+        animation-delay: -5s;
+    }
+    
+    .bg-orb-3 {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #1E3F20, transparent);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation-delay: -10s;
+    }
+    
+    @keyframes floatOrb {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+    
+    .particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+    }
+    
+    .particle {
+        position: absolute;
+        background: rgba(232, 192, 122, 0.3);
+        border-radius: 50%;
+        animation: particleFloat 15s infinite linear;
+    }
+    
+    @keyframes particleFloat {
+        0% {
+            transform: translateY(100vh) rotate(0deg);
+            opacity: 0;
+        }
+        10% { opacity: 0.5; }
+        90% { opacity: 0.3; }
+        100% {
+            transform: translateY(-100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+    
+    .auth-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .auth-glass {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
+        border-radius: 32px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+        max-width: 480px;
+        width: 100%;
+        animation: slideUpFade 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+    
+    @keyframes slideUpFade {
+        from {
+            opacity: 0;
+            transform: translateY(40px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .auth-header {
+        background: linear-gradient(135deg, #2d1810 0%, #1a1a2e 100%);
+        padding: 2.5rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .auth-header::before {
+        content: '🍕';
+        position: absolute;
+        bottom: -30px;
+        right: -30px;
+        font-size: 120px;
+        opacity: 0.08;
+        pointer-events: none;
+        transform: rotate(-15deg);
+    }
+    
+    .auth-header::after {
+        content: '🔥';
+        position: absolute;
+        top: -30px;
+        left: -30px;
+        font-size: 100px;
+        opacity: 0.06;
+        pointer-events: none;
+        transform: rotate(10deg);
+    }
+    
+    .logo-icon {
+        width: 70px;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.25rem;
+        animation: floatLogo 3s ease-in-out infinite;
+    }
+    
+    @keyframes floatLogo {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    .logo-icon i {
+        font-size: 2.5rem;
+        color: #E8C07A;
+    }
+    
+    .auth-header h1 {
+        font-family: 'Newsreader', serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+    }
+    
+    .auth-header h1 span {
+        color: #E8C07A;
+    }
+    
+    .auth-header p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    
+    .auth-body {
+        padding: 2rem;
+    }
+    
+    .auth-tabs-modern {
+        display: flex;
+        gap: 0.5rem;
+        background: #f5f5f5;
+        padding: 0.5rem;
+        border-radius: 60px;
+        margin-bottom: 2rem;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        padding: 0.85rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: transparent;
+        border: none;
+        border-radius: 60px;
+        color: #888;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .tab-btn i {
+        margin-right: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .tab-btn.active {
+        background: #D35400;
+        color: white;
+        box-shadow: 0 4px 12px rgba(211, 84, 0, 0.3);
+    }
+    
+    .auth-form-modern {
+        display: none;
+        animation: formFadeIn 0.4s ease;
+    }
+    
+    .auth-form-modern.active {
+        display: block;
+    }
+    
+    @keyframes formFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .input-group-modern {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .input-group-modern label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #666;
+        margin-bottom: 0.5rem;
+    }
+    
+    .input-wrapper-modern {
+        position: relative;
+    }
+    
+    .input-icon-modern {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #aaa;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        pointer-events: none;
+    }
+    
+    .input-field-modern {
+        width: 100%;
+        padding: 1rem 1rem 1rem 2.75rem;
+        border: 2px solid #e5e5e5;
+        border-radius: 16px;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: white;
+    }
+    
+    .input-field-modern:focus {
+        outline: none;
+        border-color: #D35400;
+        box-shadow: 0 0 0 4px rgba(211, 84, 0, 0.1);
+    }
+    
+    .input-field-modern.error {
+        border-color: #dc3545;
+        animation: shake 0.3s ease;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+    
+    .password-toggle-modern {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #aaa;
+        cursor: pointer;
+        transition: color 0.2s;
+        font-size: 1rem;
+    }
+    
+    .password-toggle-modern:hover {
+        color: #D35400;
+    }
+    
+    .error-message-modern {
+        font-size: 0.7rem;
+        color: #dc3545;
+        margin-top: 0.5rem;
+        display: none;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .error-message-modern.show {
+        display: flex;
+    }
+    
+    .checkbox-modern {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        margin: 1rem 0;
+    }
+    
+    .checkbox-modern input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #D35400;
+    }
+    
+    .checkbox-modern span {
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .btn-auth-modern {
+        width: 100%;
+        padding: 1rem;
+        background: #D35400;
+        color: white;
+        border: none;
+        border-radius: 16px;
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-auth-modern:hover {
+        background: #A04000;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(211, 84, 0, 0.3);
+    }
+    
+    .btn-auth-modern:disabled {
+        background: #666;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-auth-modern:disabled:hover {
+        background: #666;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-auth-modern.loading {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+    
+    .btn-auth-modern.loading::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        top: 50%;
+        left: 50%;
+        margin-left: -10px;
+        margin-top: -10px;
+        border: 2px solid white;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .strength-meter {
+        margin-top: 0.5rem;
+    }
+    
+    .strength-bars {
+        display: flex;
+        gap: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .strength-bar {
+        flex: 1;
+        height: 4px;
+        background: #e5e5e5;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+    }
+    
+    .strength-bar.weak { background: #dc3545; }
+    .strength-bar.fair { background: #ffc107; }
+    .strength-bar.good { background: #28a745; }
+    .strength-bar.strong { background: #17a2b8; }
+    
+    .strength-text {
+        font-size: 0.7rem;
+        color: #888;
+    }
+    
+    .success-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #1E3F20;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        z-index: 10000;
+        transform: translateX(120%);
+        transition: transform 0.4s ease;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .success-toast.show {
+        transform: translateX(0);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Animated Background -->
+<div class="auth-bg">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+</div>
+
+<div class="particles" id="particles"></div>
+
+<!-- Success Toast -->
+<div id="successToast" class="success-toast">
+    <i class="bi bi-check-circle-fill"></i>
+    <span id="toastMessage">Welcome!</span>
+</div>
+
+<!-- Main Auth Container -->
+<div class="auth-wrapper">
+    <div class="auth-glass">
+        <div class="auth-header">
+            <div class="logo-icon">
+                <i class="bi bi-fire"></i>
+            </div>
+            <h1>EMBER <span>&</span> ROOT</h1>
+            <p>Wood-fired pizza from the mountains of Nagano</p>
+        </div>
+        
+        <div class="auth-body">
+            <!-- Tabs -->
+            <div class="auth-tabs-modern">
+                <button class="tab-btn {% if active_tab != 'register' %}active{% endif %}" data-tab="login">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+                <button class="tab-btn {% if active_tab == 'register' %}active{% endif %}" data-tab="register">
+                    <i class="bi bi-person-plus-fill"></i> Create Account
+                </button>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form-modern {% if active_tab != 'register' %}active{% endif %}">
+                <form id="loginFormElement" method="post" action="{% url 'auth' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="login">
+                    
+                    <div class="input-group-modern">
+                        <label>Email Address</label>
+                        <div class="input-wrapper-modern">
+                            <i class="bi bi-envelope-fill input-icon-modern"></i>
+                            <input type="email" class="input-field-modern {% if login_form.username.errors %}error{% endif %}" 
+                                   name="username" id="loginEmail" placeholder="hello@emberandroot.jp" 
+                                   value="{{ login_form.username.value|default:'' }}">
+                        </div>
+                        <div class="error-message-modern" id="loginEmailError">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 
+                            {% if login_form.username.errors %}
+                                {{ login_form.username.errors.0 }}
+                            {% else %}
+                                Please enter a valid email
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="input-group-modern">
+                        <label>Password</label>
+                        <div class="input-wrapper-modern">
+                            <i class="bi bi-lock-fill input-icon-modern"></i>
+                            <input type="password" class="input-field-modern {% if login_form.password.errors %}error{% endif %}" 
+                                   name="password" id="loginPassword" placeholder="Enter your password">
+                            <button type="button" class="password-toggle-modern" onclick="togglePasswordField('loginPassword')">
+                                <i class="bi bi-eye-slash"></i>
+                            </button>
+                        </div>
+                        <div class="error-message-modern" id="loginPasswordError">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Please enter your password
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-auth-modern" id="loginBtn">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" class="auth-form-modern {% if active_tab == 'register' %}active{% endif %}">
+                <form id="registerFormElement" method="post" action="{% url 'auth' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="register">
+                    
+                    <div class="input-group-modern">
+                        <label>Full Name</label>
+                        <div class="input-wrapper-modern">
+                            <i class="bi bi-person-fill input-icon-modern"></i>
+                            <input type="text" class="input-field-modern {% if register_form.first_name.errors %}error{% endif %}" 
+                                   name="first_name" id="registerName" placeholder="Kenji Tanaka"
+                                   value="{{ register_form.first_name.value|default:'' }}">
+                        </div>
+                        <div class="error-message-modern" id="registerNameError">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 
+                            {% if register_form.first_name.errors %}
+                                {{ register_form.first_name.errors.0 }}
+                            {% else %}
+                                Please enter your name
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="input-group-modern">
+                        <label>Email Address</label>
+                        <div class="input-wrapper-modern">
+                            <i class="bi bi-envelope-fill input-icon-modern"></i>
+                            <input type="email" class="input-field-modern {% if register_form.email.errors %}error{% endif %}" 
+                                   name="email" id="registerEmail" placeholder="hello@emberandroot.jp"
+                                   value="{{ register_form.email.value|default:'' }}">
+                        </div>
+                        <div class="error-message-modern" id="registerEmailError">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 
+                            {% if register_form.email.errors %}
+                                {{ register_form.email.errors.0 }}
+                            {% else %}
+                                Please enter a valid email
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="input-group-modern">
+                        <label>Phone (Optional)</label>
+                        <div class="input-wrapper-modern">
+                            <i class="bi bi-telephone-fill input-icon-modern"></i>
+                            <input type="tel" class="input-field-modern" name="phone" id="registerPhone" 
+                                   placeholder="+81 XX-XXXX-XXXX" value="{{ register_form.phone.value|default:'' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group-modern">
+                        <label>Password</label>
+                        <div class="input-wrapper-modern">
+                            <i class="bi bi-lock-fill input-icon-modern"></i>
+                            <input type="password" class="input-field-modern {% if register_form.password1.errors %}error{% endif %}" 
+                                   name="password1" id="registerPassword" placeholder="Create a strong password">
+                            <button type="button" class="password-toggle-modern" onclick="togglePasswordField('registerPassword')">
+                                <i class="bi bi-eye-slash"></i>
+                            </button>
+                        </div>
+                        <div class="strength-meter" id="strengthMeter">
+                            <div class="strength-bars">
+                                <div class="strength-bar" id="strength1"></div>
+                                <div class="strength-bar" id="strength2"></div>
+                                <div class="strength-bar" id="strength3"></div>
+                                <div class="strength-bar" id="strength4"></div>
+                            </div>
+                            <div class="strength-text" id="strengthText">Password strength</div>
+                        </div>
+                        <div class="error-message-modern" id="registerPasswordError">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 
+                            {% if register_form.password1.errors %}
+                                {{ register_form.password1.errors.0 }}
+                            {% else %}
+                                Password must be at least 6 characters
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="input-group-modern">
+                        <label>Confirm Password</label>
+                        <div class="input-wrapper-modern">
+                            <i class="bi bi-lock-fill input-icon-modern"></i>
+                            <input type="password" class="input-field-modern {% if register_form.password2.errors %}error{% endif %}" 
+                                   name="password2" id="registerConfirmPassword" placeholder="Confirm your password">
+                            <button type="button" class="password-toggle-modern" onclick="togglePasswordField('registerConfirmPassword')">
+                                <i class="bi bi-eye-slash"></i>
+                            </button>
+                        </div>
+                        <div class="error-message-modern" id="registerConfirmError">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 
+                            {% if register_form.password2.errors %}
+                                {{ register_form.password2.errors.0 }}
+                            {% else %}
+                                Passwords do not match
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <label class="checkbox-modern">
+                        <input type="checkbox" name="terms_agree" id="termsAgree" 
+                               {% if register_form.terms_agree.value %}checked{% endif %}> 
+                        <span>I agree to the Terms of Service and Privacy Policy</span>
+                    </label>
+                    <div class="error-message-modern" id="termsError">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Please agree to the terms
+                    </div>
+                    
+                    <button type="submit" class="btn-auth-modern" id="registerBtn">
+                        <i class="bi bi-person-plus-fill me-2"></i> Create Account
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- Hidden element to pass Django data to JavaScript -->
+<div id="django-data" style="display: none;">
+    <script type="application/json">
+        {
+            "errors": {
+                "login": {
+                    {% if login_form.errors %}
+                        {% for field, errors in login_form.errors.items %}
+                        "{{ field }}": "{{ errors.0|escapejs }}"{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    {% endif %}
+                },
+                "register": {
+                    {% if register_form.errors %}
+                        {% for field, errors in register_form.errors.items %}
+                        "{{ field }}": "{{ errors.0|escapejs }}"{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    {% endif %}
+                }
+            },
+            "messages": [
+                {% if messages %}
+                    {% for message in messages %}
+                    { "message": "{{ message|escapejs }}", "isSuccess": {% if message.tags == 'success' %}true{% else %}false{% endif %} }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                {% endif %}
+            ]
+        }
+    </script>
+</div>
+
+{% block extra_js %}
+<script>
+    // Parse Django data from hidden element
+    try {
+        const djangoDataElement = document.getElementById('django-data');
+        if (djangoDataElement) {
+            const scriptElement = djangoDataElement.querySelector('script');
+            if (scriptElement) {
+                const jsonText = scriptElement.textContent.trim();
+                console.log('JSON text:', jsonText);
+                const djangoData = JSON.parse(jsonText);
+                window.djangoErrors = djangoData.errors;
+                window.djangoMessages = djangoData.messages;
+                console.log('Parsed data:', djangoData);
+            } else {
+                console.error('Script element not found in django-data');
+            }
+        } else {
+            console.error('django-data element not found');
+        }
+    } catch (error) {
+        console.error('Error parsing Django data:', error);
+    }
+    
+    // Create floating particles
+    function createParticles() {
+        const container = document.getElementById('particles');
+        if (!container) return;
+        
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            const size = Math.random() * 6 + 2;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = Math.random() * 10 + 8 + 's';
+            particle.style.animationDelay = Math.random() * 10 + 's';
+            container.appendChild(particle);
+        }
+    }
+    
+    // Tab switching
+    function initTabs() {
+        const tabs = document.querySelectorAll('.tab-btn');
+        const forms = document.querySelectorAll('.auth-form-modern');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.tab;
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                forms.forEach(form => form.classList.remove('active'));
+                document.getElementById(`${target}Form`).classList.add('active');
+            });
+        });
+    }
+    
+    // Toggle password visibility
+    window.togglePasswordField = function(fieldId) {
+        const field = document.getElementById(fieldId);
+        const toggle = field.parentElement.querySelector('.password-toggle-modern i');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            toggle.classList.remove('bi-eye-slash');
+            toggle.classList.add('bi-eye');
+        } else {
+            field.type = 'password';
+            toggle.classList.remove('bi-eye');
+            toggle.classList.add('bi-eye-slash');
+        }
+    };
+    
+    // Password strength meter
+    function initStrengthMeter() {
+        const passwordInput = document.getElementById('registerPassword');
+        if (!passwordInput) return;
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            const strength = calculateStrength(password);
+            updateStrengthUI(strength);
+            validateRegisterForm();
+        });
+    }
+    
+    function calculateStrength(password) {
+        let score = 0;
+        if (password.length >= 6) score++;
+        if (password.length >= 10) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+        return Math.min(score, 4);
+    }
+    
+    function updateStrengthUI(strength) {
+        const bars = ['strength1', 'strength2', 'strength3', 'strength4'];
+        const texts = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+        const colors = ['weak', 'weak', 'fair', 'good', 'strong'];
+        
+        bars.forEach((barId, index) => {
+            const bar = document.getElementById(barId);
+            if (bar) {
+                if (index < strength) {
+                    bar.className = `strength-bar ${colors[strength]}`;
+                } else {
+                    bar.className = 'strength-bar';
+                }
+            }
+        });
+        
+        const strengthText = document.getElementById('strengthText');
+        if (strengthText) {
+            strengthText.textContent = texts[strength];
+            strengthText.style.color = strength >= 3 ? '#28a745' : strength >= 2 ? '#ffc107' : '#dc3545';
+        }
+    }
+    
+    // Real-time validation
+    function initRealTimeValidation() {
+        console.log('Initializing real-time validation');
+        
+        // Login form validation
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        
+        console.log('Login elements found:', { loginEmail: !!loginEmail, loginPassword: !!loginPassword, loginBtn: !!loginBtn });
+        
+        if (loginEmail) {
+            loginEmail.addEventListener('input', function() {
+                console.log('Login email input event');
+                validateLoginForm();
+            });
+        }
+        if (loginPassword) {
+            loginPassword.addEventListener('input', function() {
+                console.log('Login password input event');
+                validateLoginForm();
+            });
+        }
+        
+        // Register form validation
+        const registerName = document.getElementById('registerName');
+        const registerEmail = document.getElementById('registerEmail');
+        const registerPassword = document.getElementById('registerPassword');
+        const registerConfirmPassword = document.getElementById('registerConfirmPassword');
+        const termsAgree = document.getElementById('termsAgree');
+        const registerBtn = document.getElementById('registerBtn');
+        
+        console.log('Register elements found:', { 
+            registerName: !!registerName, 
+            registerEmail: !!registerEmail, 
+            registerPassword: !!registerPassword, 
+            registerConfirmPassword: !!registerConfirmPassword, 
+            termsAgree: !!termsAgree, 
+            registerBtn: !!registerBtn 
+        });
+        
+        if (registerName) {
+            registerName.addEventListener('input', function() {
+                console.log('Register name input event');
+                validateRegisterForm();
+            });
+        }
+        if (registerEmail) {
+            registerEmail.addEventListener('input', function() {
+                console.log('Register email input event');
+                validateRegisterForm();
+            });
+        }
+        if (registerConfirmPassword) {
+            registerConfirmPassword.addEventListener('input', function() {
+                console.log('Register confirm password input event');
+                validateRegisterForm();
+            });
+        }
+        if (termsAgree) {
+            termsAgree.addEventListener('change', function() {
+                console.log('Terms agree change event');
+                validateRegisterForm();
+            });
+        }
+    }
+    
+    function validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    function validateLoginForm() {
+        console.log('Validating login form');
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const loginBtn = document.getElementById('loginBtn');
+        const emailError = document.getElementById('loginEmailError');
+        const passwordError = document.getElementById('loginPasswordError');
+        
+        console.log('Login form values:', { email, password: password ? '***' : '' });
+        
+        let isValid = true;
+        
+        // Clear previous errors
+        if (emailError) emailError.classList.remove('show');
+        if (passwordError) passwordError.classList.remove('show');
+        document.getElementById('loginEmail').classList.remove('error');
+        document.getElementById('loginPassword').classList.remove('error');
+        
+        // Validate email
+        if (email && !validateEmail(email)) {
+            console.log('Invalid email format');
+            if (emailError) {
+                emailError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Invalid email format';
+                emailError.classList.add('show');
+            }
+            document.getElementById('loginEmail').classList.add('error');
+            isValid = false;
+        }
+        
+        // Validate password
+        if (!password) {
+            console.log('Password is empty');
+            if (passwordError) {
+                passwordError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Password is required';
+                passwordError.classList.add('show');
+            }
+            document.getElementById('loginPassword').classList.add('error');
+            isValid = false;
+        }
+        
+        console.log('Login form valid:', isValid);
+        
+        // Enable/disable button
+        if (loginBtn) {
+            loginBtn.disabled = !isValid;
+            loginBtn.style.opacity = isValid ? '1' : '0.6';
+        }
+        
+        return isValid;
+    }
+    
+    function validateRegisterForm() {
+        console.log('Validating register form');
+        const name = document.getElementById('registerName').value.trim();
+        const email = document.getElementById('registerEmail').value.trim();
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('registerConfirmPassword').value;
+        const termsAgree = document.getElementById('termsAgree').checked;
+        const registerBtn = document.getElementById('registerBtn');
+        
+        console.log('Register form values:', { 
+            name, 
+            email, 
+            password: password ? '***' : '', 
+            confirmPassword: confirmPassword ? '***' : '', 
+            termsAgree 
+        });
+        
+        const nameError = document.getElementById('registerNameError');
+        const emailError = document.getElementById('registerEmailError');
+        const passwordError = document.getElementById('registerPasswordError');
+        const confirmError = document.getElementById('registerConfirmError');
+        const termsError = document.getElementById('termsError');
+        
+        let isValid = true;
+        
+        // Clear previous errors
+        if (nameError) nameError.classList.remove('show');
+        if (emailError) emailError.classList.remove('show');
+        if (passwordError) passwordError.classList.remove('show');
+        if (confirmError) confirmError.classList.remove('show');
+        if (termsError) termsError.classList.remove('show');
+        
+        document.getElementById('registerName').classList.remove('error');
+        document.getElementById('registerEmail').classList.remove('error');
+        document.getElementById('registerPassword').classList.remove('error');
+        document.getElementById('registerConfirmPassword').classList.remove('error');
+        
+        // Validate name
+        if (!name) {
+            console.log('Name is empty');
+            if (nameError) {
+                nameError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Name is required';
+                nameError.classList.add('show');
+            }
+            document.getElementById('registerName').classList.add('error');
+            isValid = false;
+        }
+        
+        // Validate email
+        if (!email) {
+            console.log('Email is empty');
+            if (emailError) {
+                emailError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Email is required';
+                emailError.classList.add('show');
+            }
+            document.getElementById('registerEmail').classList.add('error');
+            isValid = false;
+        } else if (!validateEmail(email)) {
+            console.log('Invalid email format');
+            if (emailError) {
+                emailError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Invalid email format';
+                emailError.classList.add('show');
+            }
+            document.getElementById('registerEmail').classList.add('error');
+            isValid = false;
+        }
+        
+        // Validate password
+        if (!password) {
+            console.log('Password is empty');
+            if (passwordError) {
+                passwordError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Password is required';
+                passwordError.classList.add('show');
+            }
+            document.getElementById('registerPassword').classList.add('error');
+            isValid = false;
+        } else if (password.length < 6) {
+            console.log('Password too short');
+            if (passwordError) {
+                passwordError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Password must be at least 6 characters';
+                passwordError.classList.add('show');
+            }
+            document.getElementById('registerPassword').classList.add('error');
+            isValid = false;
+        }
+        
+        // Validate confirm password
+        if (!confirmPassword) {
+            console.log('Confirm password is empty');
+            if (confirmError) {
+                confirmError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Please confirm your password';
+                confirmError.classList.add('show');
+            }
+            document.getElementById('registerConfirmPassword').classList.add('error');
+            isValid = false;
+        } else if (password !== confirmPassword) {
+            console.log('Passwords do not match');
+            if (confirmError) {
+                confirmError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Passwords do not match';
+                confirmError.classList.add('show');
+            }
+            document.getElementById('registerConfirmPassword').classList.add('error');
+            isValid = false;
+        }
+        
+        // Validate terms
+        if (!termsAgree) {
+            console.log('Terms not agreed');
+            if (termsError) {
+                termsError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Please agree to the terms';
+                termsError.classList.add('show');
+            }
+            isValid = false;
+        }
+        
+        console.log('Register form valid:', isValid);
+        
+        // Enable/disable button
+        if (registerBtn) {
+            registerBtn.disabled = !isValid;
+            registerBtn.style.opacity = isValid ? '1' : '0.6';
+        }
+        
+        return isValid;
+    }
+    
+    // Show Django form errors
+    function showDjangoErrors() {
+        // Login form errors
+        if (window.djangoErrors.login && window.djangoErrors.login.username) {
+            const el = document.getElementById('loginEmailError');
+            if (el) {
+                el.classList.add('show');
+                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.login.username;
+            }
+            document.getElementById('loginEmail')?.classList.add('error');
+        }
+        if (window.djangoErrors.login && window.djangoErrors.login.password) {
+            const el = document.getElementById('loginPasswordError');
+            if (el) {
+                el.classList.add('show');
+                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.login.password;
+            }
+            document.getElementById('loginPassword')?.classList.add('error');
+        }
+        if (window.djangoErrors.login && window.djangoErrors.login.__all__) {
+            showToastMessage(window.djangoErrors.login.__all__, false);
+        }
+        
+        // Register form errors
+        if (window.djangoErrors.register && window.djangoErrors.register.first_name) {
+            const el = document.getElementById('registerNameError');
+            if (el) {
+                el.classList.add('show');
+                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.first_name;
+            }
+            document.getElementById('registerName')?.classList.add('error');
+        }
+        if (window.djangoErrors.register && window.djangoErrors.register.email) {
+            const el = document.getElementById('registerEmailError');
+            if (el) {
+                el.classList.add('show');
+                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.email;
+            }
+            document.getElementById('registerEmail')?.classList.add('error');
+        }
+        if (window.djangoErrors.register && window.djangoErrors.register.password1) {
+            const el = document.getElementById('registerPasswordError');
+            if (el) {
+                el.classList.add('show');
+                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.password1;
+            }
+            document.getElementById('registerPassword')?.classList.add('error');
+        }
+        if (window.djangoErrors.register && window.djangoErrors.register.password2) {
+            const el = document.getElementById('registerConfirmError');
+            if (el) {
+                el.classList.add('show');
+                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.password2;
+            }
+            document.getElementById('registerConfirmPassword')?.classList.add('error');
+        }
+        if (window.djangoErrors.register && window.djangoErrors.register.terms_agree) {
+            const el = document.getElementById('termsError');
+            if (el) {
+                el.classList.add('show');
+                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.terms_agree;
+            }
+        }
+        
+        // Show Django messages
+        window.djangoMessages.forEach(function(msg) {
+            showToastMessage(msg.message, msg.isSuccess);
+        });
+    }
+    
+    // Show toast message function
+    function showToastMessage(message, isSuccess) {
+        if (isSuccess === undefined) isSuccess = true;
+        const toast = document.getElementById('successToast');
+        const toastMsg = document.getElementById('toastMessage');
+        if (toast && toastMsg) {
+            toastMsg.textContent = message;
+            toast.style.background = isSuccess ? '#1E3F20' : '#dc3545';
+            toast.classList.add('show');
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded - Initializing auth page');
+        createParticles();
+        initTabs();
+        initStrengthMeter();
+        initRealTimeValidation();
+        showDjangoErrors();
+        
+        // Initially disable buttons
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        if (loginBtn) {
+            loginBtn.disabled = true;
+            loginBtn.style.opacity = '0.6';
+        }
+        if (registerBtn) {
+            registerBtn.disabled = true;
+            registerBtn.style.opacity = '0.6';
+        }
+        console.log('Initialization complete');
+    });
+</script>
+{% endblock %}

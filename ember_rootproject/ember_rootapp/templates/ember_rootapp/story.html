@@ -1,0 +1,259 @@
+{% extends 'ember_rootapp/base.html' %}
+{% load static %}
+
+{% block title %}Our Story | EMBER & ROOT{% endblock %}
+
+{% block extra_css %}
+<style>
+    .founder-image {
+        width: 100%;
+        height: 500px;
+        object-fit: cover;
+        filter: grayscale(20%);
+        border-radius: 20px;
+    }
+    
+    .farm-partner-card {
+        background: white;
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .farm-partner-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        border-color: transparent;
+    }
+    
+    .farm-partner-icon {
+        width: 64px;
+        height: 64px;
+        background: var(--stone);
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .farm-partner-icon i {
+        font-size: 1.8rem;
+        color: var(--ember);
+    }
+    
+    .farm-pizza-count {
+        font-size: 0.75rem;
+        color: var(--ash);
+        background: var(--stone);
+        padding: 0.2rem 0.75rem;
+        border-radius: 20px;
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="founder-section">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="section-eyebrow">The Firekeeper</div>
+                <div class="founder-quote">"My grandmother in Kyoto taught me that food is memory. Every ingredient carries the story of where it grew."</div>
+                <p class="mb-4">Kenji Matsumoto spent eight years in Tokyo's Michelin-starred kitchens before moving to Karuizawa. "I was cooking ingredients flown in from Europe. It felt dishonest."</p>
+                <p class="mb-4">In 2019, he bought an abandoned soba shop and built his oven by hand—900 bricks, six months, countless burns. Ember & Root opened that November with two pizzas and a simple promise: nothing travels more than 120 kilometers.</p>
+                <p class="mb-4">Today, Kenji still visits every farm personally. He still makes the dough at 5:30 each morning. And he still believes that the best ingredients are the ones you can drive to.</p>
+                <div class="founder-name">— Kenji Matsumoto, Founder</div>
+            </div>
+            <div class="col-lg-6">
+                <img src="{% static 'ember_rootapp/images/founder.png' %}"
+                     alt="Kenji Matsumoto at his wood-fired oven"
+                     class="founder-image">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="section-header text-center">
+            <div class="section-eyebrow">Our Partners</div>
+            <h2 class="section-title"><span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> Farms, One Promise</h2>
+            <p class="section-subtitle mx-auto">Every ingredient comes from within 120km of Karuizawa</p>
+        </div>
+        <div class="row g-4" id="farmPartnersGrid">
+            <!-- Loading skeleton -->
+            <div class="col-12 text-center py-3">
+                <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                    <span class="visually-hidden">Loading farms...</span>
+                </div>
+                <p class="text-muted small mt-2">Loading farm partners...</p>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'distance' %}" class="btn btn-outline-ember">
+                SEE ALL <span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> FARMS ON MAP →
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="section-header text-center">
+            <div class="section-eyebrow">Timeline</div>
+            <h2 class="section-title">From Tokyo to the Mountains</h2>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="timeline">
+                    <div class="d-flex mb-4">
+                        <div class="me-4"><strong style="color: var(--ember);">2011</strong></div>
+                        <div>Begins apprenticeship at three-Michelin-starred Kikunoi in Kyoto.</div>
+                    </div>
+                    <div class="d-flex mb-4">
+                        <div class="me-4"><strong style="color: var(--ember);">2017</strong></div>
+                        <div>Leaves Tokyo fine dining. "I wanted to cook food that told a true story."</div>
+                    </div>
+                    <div class="d-flex mb-4">
+                        <div class="me-4"><strong style="color: var(--ember);">2019</strong></div>
+                        <div>Opens Ember & Root in Karuizawa with two pizzas and a hand-built oven.</div>
+                    </div>
+                    <div class="d-flex mb-4">
+                        <div class="me-4"><strong style="color: var(--ember);">2023</strong></div>
+                        <div>Featured in "Mountains & Meals" documentary about Japanese farm-to-table movement.</div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="me-4"><strong style="color: var(--ember);">2025</strong></div>
+                        <div><span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> partner farms. Still building everything by hand.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5 pt-4">
+            <a href="{% url 'menu' %}" class="btn btn-ember">SEE THE MENU →</a>
+            <p class="text-muted mt-3 small">Every pizza tells a story of Nagano</p>
+        </div>
+    </div>
+</section>
+
+<section class="distance-banner mt-5">
+    <div class="container text-center">
+        <h3 class="text-white">Come taste the story</h3>
+        <p class="mb-3 opacity-75">Hand-built oven. Local ingredients. One chef's vision.</p>
+        <a href="{% url 'visit' %}" class="btn btn-outline-light">PLAN YOUR VISIT →</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load farm data dynamically
+    (function loadFarmPartners() {
+        console.log('🔄 Loading farm partners for story page...');
+        
+        // Try to get from cache first
+        const cached = localStorage.getItem('emberPizzasCache');
+        if (cached) {
+            try {
+                const pizzas = JSON.parse(cached);
+                displayFarmPartners(pizzas);
+            } catch(e) {
+                console.log('Cache parse error:', e);
+            }
+        }
+        
+        // Fetch fresh data
+        fetch('/api/pizzas/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.pizzas) {
+                    localStorage.setItem('emberPizzasCache', JSON.stringify(data.pizzas));
+                    displayFarmPartners(data.pizzas);
+                }
+            })
+            .catch(err => console.log('Could not load pizzas:', err));
+    })();
+    
+    function displayFarmPartners(pizzas) {
+        // Calculate unique farms
+        const farmsMap = {};
+        pizzas.forEach(pizza => {
+            if (!pizza.farm) return;
+            const farmName = pizza.farm.split(',')[0].trim();
+            if (!farmsMap[farmName]) {
+                farmsMap[farmName] = {
+                    name: farmName,
+                    fullName: pizza.farm,
+                    pizzas: [],
+                    icon: getFarmIcon(pizza.farm),
+                    farmStory: pizza.farm_story || ''
+                };
+            }
+            if (!farmsMap[farmName].pizzas.includes(pizza.name)) {
+                farmsMap[farmName].pizzas.push(pizza.name);
+            }
+        });
+        
+        const farms = Object.values(farmsMap);
+        const totalFarms = farms.length;
+        
+        console.log(`✅ Found ${totalFarms} farm partners`);
+        
+        // Update all farm count displays
+        document.querySelectorAll('.farm-count-dynamic').forEach(el => {
+            el.textContent = totalFarms;
+        });
+        
+        // Update footer
+        document.querySelectorAll('.footer-farm-count').forEach(el => {
+            el.textContent = totalFarms;
+        });
+        
+        // Render farm partner cards
+        const container = document.getElementById('farmPartnersGrid');
+        if (!container) return;
+        
+        // Show up to 6 farms (or all if less)
+        const displayFarms = farms.slice(0, 6);
+        
+        let html = '';
+        displayFarms.forEach((farm, index) => {
+            const pizzaList = farm.pizzas.slice(0, 2).join(', ');
+            const morePizzas = farm.pizzas.length > 2 ? ` +${farm.pizzas.length - 2} more` : '';
+            
+            html += `
+                <div class="col-md-4" style="animation: fadeInUp 0.5s ease ${index * 0.1}s both;">
+                    <div class="farm-partner-card text-center">
+                        <div class="farm-partner-icon">
+                            <i class="${farm.icon}"></i>
+                        </div>
+                        <h4 class="mt-3 mb-2">${farm.name}</h4>
+                        <p class="small text-muted mb-2">${pizzaList}${morePizzas}</p>
+                        <span class="farm-pizza-count">
+                            <i class="bi bi-pizza me-1"></i>${farm.pizzas.length} pizza${farm.pizzas.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    function getFarmIcon(farmName) {
+        const lower = farmName.toLowerCase();
+        if (lower.includes('dairy') || lower.includes('cheese')) return 'bi-cup-straw';
+        if (lower.includes('pork') || lower.includes('meat')) return 'bi-egg-fried';
+        if (lower.includes('mushroom') || lower.includes('forest')) return 'bi-flower1';
+        if (lower.includes('apple') || lower.includes('orchard')) return 'bi-apple';
+        if (lower.includes('wheat') || lower.includes('mill')) return 'bi-wheat';
+        return 'bi-tree-fill';
+    }
+</script>
+{% endblock %}

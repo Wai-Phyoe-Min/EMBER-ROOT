@@ -1,0 +1,2807 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | EMBER & ROOT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; overflow-x: hidden; }
+        
+        .admin-sidebar {
+            position: fixed; left: 0; top: 0; width: 280px; height: 100%;
+            background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%);
+            z-index: 1000; transition: all 0.4s ease; box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+        .sidebar-brand { padding: 2rem 1.5rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .sidebar-brand h3 { font-size: 1.6rem; font-weight: 700; color: white; margin: 0; }
+        .sidebar-brand span { color: #E8C07A; }
+        .sidebar-brand p { color: rgba(255,255,255,0.4); font-size: 0.7rem; margin-top: 0.5rem; }
+        .sidebar-nav { padding: 1.5rem 0; }
+        .nav-item-admin { margin-bottom: 0.25rem; }
+        .nav-link-admin {
+            display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.5rem;
+            color: rgba(255,255,255,0.6); text-decoration: none; transition: all 0.3s ease;
+            margin: 0 0.75rem; border-radius: 12px; cursor: pointer;
+        }
+        .nav-link-admin:hover { color: white; background: rgba(255,255,255,0.05); transform: translateX(5px); }
+        .nav-link-admin.active { color: #E8C07A; background: linear-gradient(90deg, rgba(232,192,122,0.15), transparent); border-left: 3px solid #E8C07A; }
+        .nav-link-admin i { font-size: 1.25rem; width: 24px; }
+        
+        .admin-main { margin-left: 280px; padding: 1.5rem; min-height: 100vh; transition: all 0.4s ease; }
+        .top-bar {
+            background: white; padding: 1rem 1.5rem; border-radius: 20px; margin-bottom: 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .page-title { font-size: 1.5rem; font-weight: 700; color: #1a1a2e; }
+        .admin-profile { display: flex; align-items: center; gap: 1rem; cursor: pointer; padding: 0.5rem 1rem; border-radius: 50px; }
+        .admin-profile:hover { background: #f5f5f5; }
+        .admin-avatar {
+            width: 45px; height: 45px; background: linear-gradient(135deg, #D35400, #E8C07A);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 1.2rem;
+        }
+
+        .error-message {
+            font-size: 0.7rem;
+            color: #dc3545;
+            margin-top: 0.2rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .form-control.error, .form-select.error {
+            border-color: #dc3545 !important;
+        }
+
+        .form-control.success, .form-select.success {
+            border-color: #28a745 !important;
+        }
+        
+        .stat-card {
+            background: white; border-radius: 24px; padding: 1.5rem; margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .stat-icon {
+            width: 55px; height: 55px; background: linear-gradient(135deg, #FFF5F0, #FFE8E0);
+            border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;
+        }
+        .stat-icon i { font-size: 1.8rem; color: #D35400; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: #1a1a2e; margin-bottom: 0.25rem; }
+        .stat-label { color: #6B6B6B; font-size: 0.85rem; font-weight: 500; }
+        
+        .data-table { background: white; border-radius: 24px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        .table-custom { width: 100%; border-collapse: collapse; }
+        .table-custom th {
+            text-align: left; padding: 1rem; background: #f8f9fa; font-weight: 600; color: #1a1a2e;
+            border-bottom: 2px solid #e9ecef; font-size: 0.85rem; text-transform: uppercase;
+        }
+        .table-custom td { padding: 1rem; border-bottom: 1px solid #e9ecef; color: #6B6B6B; }
+        .table-custom tr:hover { background: #f8f9fa; }
+        
+        .badge-status { padding: 0.3rem 0.9rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600; }
+        .badge-completed { background: #e8f5e9; color: #2e7d32; }
+        .badge-pending, .badge-confirmed, .badge-preparing, .badge-ready { background: #fff3e0; color: #ed6c02; }
+        .badge-cancelled { background: #ffebee; color: #d32f2f; }
+        .badge-new { background: #e3f2fd; color: #1565c0; }
+        .badge-replied { background: #e8f5e9; color: #2e7d32; }
+
+        .badge-new { background: #e3f2fd; color: #1565c0; }
+        .badge-replied { background: #e8f5e9; color: #2e7d32; }
+        .badge-read { background: #fff3e0; color: #ed6c02; }
+        .badge-archived { background: #f5f5f5; color: #666; }
+
+        #messageContent {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #D35400, #E8C07A); border: none; padding: 0.85rem 1.5rem;
+            color: white; font-weight: 600; border-radius: 50px; cursor: pointer; transition: all 0.3s;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-primary-custom:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(211,84,0,0.3); }
+        .btn-secondary-custom {
+            background: transparent; border: 2px solid #e9ecef; padding: 0.85rem 1.5rem;
+            color: #6B6B6B; font-weight: 600; border-radius: 50px; cursor: pointer; transition: all 0.3s;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-secondary-custom:hover { border-color: #D35400; color: #D35400; }
+        
+        .menu-toggle { display: none; position: fixed; top: 1rem; left: 1rem; z-index: 1001; background: #D35400; color: white; border: none; padding: 0.75rem; border-radius: 12px; cursor: pointer; }
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+        .action-btn { padding: 0.4rem 0.7rem; border: none; background: transparent; cursor: pointer; border-radius: 8px; margin: 0 2px; }
+        .btn-edit { color: #1976d2; }
+        .btn-edit:hover { background: #e3f2fd; }
+        .btn-delete { color: #d32f2f; }
+        .btn-delete:hover { background: #ffebee; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(211, 84, 0, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(211, 84, 0, 0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(30px); }
+        }
+
+        .modal-content {
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Password toggle */
+        .input-group-text {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .input-group-text:hover {
+            background: #e9ecef !important;
+        }
+        
+        @media (max-width: 992px) {
+            .admin-sidebar { left: -280px; }
+            .admin-sidebar.active { left: 0; }
+            .admin-main { margin-left: 0; }
+            .menu-toggle { display: block; }
+        }
+
+        /* Delete Confirmation Modal Styles */
+        .delete-icon-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+        
+        .delete-icon-circle {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 15px 35px rgba(255, 71, 87, 0.3);
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+        
+        .delete-icon-circle i {
+            font-size: 3rem;
+            color: white;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+        
+        .delete-icon-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 71, 87, 0.3);
+            border-radius: 30px;
+            z-index: 1;
+            animation: pulseDelete 2s ease-in-out infinite;
+        }
+        
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        
+        @keyframes pulseDelete {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.3);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.6;
+            }
+        }
+        
+        .warning-badge {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #e65100;
+            padding: 0.7rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-left: 4px solid #ff9800;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.15);
+            animation: slideInUp 0.5s ease-out 0.2s both;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .btn-cancel-delete {
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            color: #666;
+            padding: 0.85rem 1.8rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-cancel-delete:hover {
+            background: white;
+            border-color: #ccc;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-cancel-delete:active {
+            transform: translateY(0);
+        }
+        
+        .btn-confirm-delete {
+            background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+            border: none;
+            color: white;
+            padding: 0.85rem 1.8rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(255, 71, 87, 0.3);
+        }
+        
+        .btn-confirm-delete:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(255, 71, 87, 0.4);
+            background: linear-gradient(135deg, #ff3547 0%, #ff5b71 100%);
+        }
+        
+        .btn-confirm-delete:active {
+            transform: translateY(0);
+        }
+        
+        .btn-confirm-delete:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-confirm-delete:disabled i {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Modal Animation */
+        #deleteConfirmModal .modal-content {
+            animation: modalZoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes modalZoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 576px) {
+            .delete-icon-wrapper {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .delete-icon-circle {
+                width: 80px;
+                height: 80px;
+                border-radius: 24px;
+            }
+            
+            .delete-icon-circle i {
+                font-size: 2.5rem;
+            }
+            
+            .delete-icon-pulse {
+                width: 80px;
+                height: 80px;
+                border-radius: 24px;
+            }
+            
+            .btn-cancel-delete,
+            .btn-confirm-delete {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.85rem;
+            }
+            
+            .d-flex.gap-3 {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-cancel-delete,
+            .btn-confirm-delete {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle" id="menuToggle"><i class="bi bi-list fs-4"></i></button>
+
+<!-- Sidebar -->
+<div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-brand">
+        <h3>EMBER <span>&</span> ROOT</h3>
+        <p>Administrator Portal</p>
+        <p>Version 1.0</p>
+    </div>
+    <div class="sidebar-nav">
+        <div class="nav-item-admin"><a class="nav-link-admin active" data-section="dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></div>
+        <div class="nav-item-admin"><a class="nav-link-admin" data-section="pizzas"><i class="bi bi-pizza"></i> Pizzas</a></div>
+        <div class="nav-item-admin"><a class="nav-link-admin" data-section="menu_items"><i class="bi bi-egg-fried"></i> Sides & Drinks</a></div>
+        <div class="nav-item-admin"><a class="nav-link-admin" data-section="orders"><i class="bi bi-cart-check-fill"></i> Orders</a></div>
+        <div class="nav-item-admin"><a class="nav-link-admin" data-section="customers"><i class="bi bi-people-fill"></i> Customers</a></div>
+        <div class="nav-item-admin"><a class="nav-link-admin" data-section="messages"><i class="bi bi-envelope-fill"></i> Contact Messages</a></div>
+        <div class="nav-item-admin"><a class="nav-link-admin" data-section="hours"><i class="bi bi-clock-history"></i> Business Hours</a></div>
+        <div class="nav-item-admin mt-4"><a href="{% url 'index' %}" class="nav-link-admin"><i class="bi bi-house"></i> View Site</a></div>
+        <div class="nav-item-admin"><a href="{% url 'admin:index' %}" class="nav-link-admin"><i class="bi bi-gear"></i> Django Admin</a></div>
+        <div class="nav-item-admin"><a href="#" class="nav-link-admin text-danger" data-action="logout"><i class="bi bi-box-arrow-right"></i> Logout</a></div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="admin-main">
+    <div class="top-bar">
+        <h2 class="page-title" id="pageTitle">Dashboard</h2>
+        <div class="d-flex align-items-center gap-3">
+            <span>Welcome, {{ user.first_name|default:user.email }}</span>
+            <div class="admin-profile">
+                <div class="admin-avatar">{{ user.get_avatar_initial }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="section-content active">
+        <div class="row g-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-currency-yen"></i></div>
+                    <div class="stat-value">¥{{ total_revenue|floatformat:0|default:"0" }}</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-cart-check"></i></div>
+                    <div class="stat-value">{{ total_orders|default:"0" }}</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-people"></i></div>
+                    <div class="stat-value">{{ total_customers|default:"0" }}</div>
+                    <div class="stat-label">Customers</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-envelope"></i></div>
+                    <div class="stat-value">{{ new_messages|default:"0" }}</div>
+                    <div class="stat-label">New Messages</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-lg-8">
+                <div class="data-table">
+                    <h5 class="mb-3">Recent Orders</h5>
+                    <div class="table-responsive">
+                        <table class="table-custom">
+                            <thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td><strong>{{ order.order_number }}</strong></td>
+                                    <td>{{ order.user.get_full_name|default:order.user.email }}</td>
+                                    <td>¥{{ order.total|floatformat:0 }}</td>
+                                    <td><span class="badge-status badge-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                                    <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                                    <td>
+                                        <button class="action-btn btn-edit" data-action="view-order" data-id="{{ order.id }}" title="View Details">
+                                            <i class="bi bi-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="6" class="text-center py-3 text-muted">No orders yet</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="data-table">
+                    <h5 class="mb-3">Quick Actions</h5>
+                    <button class="btn-primary-custom w-100 mb-2" data-action="show-pizzas">Add New Pizza</button>
+                    <button class="btn-primary-custom w-100 mb-2" data-action="show-menu-items">Add Menu Item</button>
+                    <a href="{% url 'admin:index' %}" class="btn-secondary-custom w-100 text-center">Django Admin</a>
+                </div>
+                <div class="data-table mt-3">
+                    <h5 class="mb-3">Recent Messages</h5>
+                    {% for msg in recent_messages %}
+                    <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                        <div><strong>{{ msg.name }}</strong><div class="small text-muted">{{ msg.get_subject_display }}</div></div>
+                        <span class="badge-status badge-{{ msg.status }}">{{ msg.get_status_display }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-2">No messages</p>
+                    {% endfor %}
+                    <button class="btn-secondary-custom w-100 mt-2" data-action="show-messages">View All Messages</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pizzas Section -->
+    <div id="pizzas" class="section-content">
+        <div class="data-table">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5>Pizza Menu</h5>
+                <button class="btn-primary-custom" data-action="add-pizza">
+                    <i class="bi bi-plus-lg me-2"></i>Add New Pizza
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Farm</th><th>Bestseller</th><th>Available</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for pizza in pizzas %}
+                        <tr>
+                            <td><strong>{{ pizza.name }}</strong></td>
+                            <td>{{ pizza.get_category_display }}</td>
+                            <td>¥{{ pizza.price|floatformat:0 }}</td>
+                            <td>{{ pizza.farm|default:"-" }}</td>
+                            <td>{% if pizza.bestseller %}✓{% else %}-{% endif %}</td>
+                            <td>{% if pizza.is_available %}✓{% else %}✗{% endif %}</td>
+                            <td>
+                                <button class="action-btn btn-edit" data-action="edit-pizza" data-id="{{ pizza.id }}"><i class="bi bi-pencil"></i></button>
+                                <button class="action-btn btn-delete" data-action="delete-pizza" data-id="{{ pizza.id }}"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center py-3 text-muted">No pizzas yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Menu Items Section -->
+    <div id="menu_items" class="section-content">
+        <div class="data-table mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5>Sides & Drinks</h5>
+                <button class="btn-primary-custom" data-action="add-menu-item">
+                    <i class="bi bi-plus-lg me-2"></i>Add New Item
+                </button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="fw-bold text-uppercase small text-secondary mb-3">
+                        <i class="bi bi-egg-fried me-2" style="color: var(--ember);"></i>Sides
+                    </h6>
+                    {% for item in sides %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            {% if item.image %}
+                            <img src="{{ item.image }}" alt="{{ item.name }}" style="width: 50px; height: 50px; border-radius: 10px; object-fit: cover;">
+                            {% else %}
+                            <div style="width: 50px; height: 50px; background: var(--stone); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-egg-fried text-secondary"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <strong>{{ item.name }}</strong>
+                                <div class="small text-muted">¥{{ item.price|floatformat:0 }} {% if not item.is_available %}(Unavailable){% endif %}</div>
+                                <div class="small text-muted">{{ item.description }}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="action-btn btn-edit" data-action="edit-menu-item" data-id="{{ item.id }}"><i class="bi bi-pencil"></i></button>
+                            <button class="action-btn btn-delete" data-action="delete-menu-item" data-id="{{ item.id }}"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-3">No sides yet</p>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold text-uppercase small text-secondary mb-3">
+                        <i class="bi bi-cup-straw me-2" style="color: var(--ember);"></i>Drinks
+                    </h6>
+                    {% for item in drinks %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            {% if item.image %}
+                            <img src="{{ item.image }}" alt="{{ item.name }}" style="width: 50px; height: 50px; border-radius: 10px; object-fit: cover;">
+                            {% else %}
+                            <div style="width: 50px; height: 50px; background: var(--stone); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-cup-straw text-secondary"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <strong>{{ item.name }}</strong>
+                                <div class="small text-muted">¥{{ item.price|floatformat:0 }} {% if not item.is_available %}(Unavailable){% endif %}</div>
+                                <div class="small text-muted">{{ item.description }}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="action-btn btn-edit" data-action="edit-menu-item" data-id="{{ item.id }}"><i class="bi bi-pencil"></i></button>
+                            <button class="action-btn btn-delete" data-action="delete-menu-item" data-id="{{ item.id }}"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-3">No drinks yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Orders Section -->
+    <div id="orders" class="section-content">
+        <div class="data-table">
+            <h5 class="mb-4">Order Management</h5>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for order in all_orders %}
+                        <tr>
+                            <td><strong>{{ order.order_number }}</strong></td>
+                            <td>{{ order.user.get_full_name|default:order.user.email }}</td>
+                            <td>
+                                {% for item in order.items %}{{ item.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            </td>
+                            <td>¥{{ order.total|floatformat:0 }}</td>
+                            <td><span class="badge-status badge-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                            <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <select class="form-select form-select-sm status-select" style="width:130px;" data-order-id="{{ order.id }}">
+                                        <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                        <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>Preparing</option>
+                                        <option value="ready" {% if order.status == 'ready' %}selected{% endif %}>Ready</option>
+                                        <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>Completed</option>
+                                        <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                    <button class="action-btn btn-edit" data-action="view-order" data-id="{{ order.id }}" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center py-3 text-muted">No orders yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Customers Section -->
+    <div id="customers" class="section-content">
+        <div class="data-table">
+            <h5 class="mb-4">Customer Management</h5>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead><tr><th>Customer</th><th>Email</th><th>Phone</th><th>Orders</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td><strong>{% if customer.get_full_name %}{{ customer.get_full_name }}{% else %}{{ customer.email }}{% endif %}</strong></td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ customer.phone|default:"-" }}</td>
+                            <td>{{ customer.orders.count|default:"0" }}</td>
+                            <td>{{ customer.created_at|date:"Y-m-d" }}</td>
+                            <td><span class="badge-status {% if customer.is_active %}badge-completed{% else %}badge-cancelled{% endif %}">{% if customer.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                            <td>
+                                <button class="action-btn btn-delete" data-action="delete-customer" data-id="{{ customer.id }}" data-name="{{ customer.get_full_name|default:customer.email }}" title="Delete Customer">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center py-3 text-muted">No customers yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Messages Section -->
+    <div id="messages" class="section-content">
+        <div class="data-table">
+            <h5 class="mb-4">Contact Messages</h5>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead><tr><th>Name</th><th>Email</th><th>Subject</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for msg in all_messages %}
+                        <tr>
+                            <td><strong>{{ msg.name }}</strong></td>
+                            <td>{{ msg.email }}</td>
+                            <td>{{ msg.get_subject_display }}</td>
+                            <td><span class="badge-status badge-{{ msg.status }}">{{ msg.get_status_display }}</span></td>
+                            <td>{{ msg.created_at|date:"Y-m-d" }}</td>
+                            <td>
+                                <button class="action-btn btn-edit" data-action="view-message" data-id="{{ msg.id }}"><i class="bi bi-eye"></i> View</button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center py-3 text-muted">No messages yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hours Section -->
+    <div id="hours" class="section-content">
+        <div class="data-table">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5>Business Hours Management</h5>
+                <button class="btn-primary-custom" onclick="saveHours()">
+                    <i class="bi bi-check-lg me-2"></i>Save Changes
+                </button>
+            </div>
+            
+            <p class="text-muted small mb-4">
+                <i class="bi bi-info-circle me-1"></i> 
+                Set opening and closing times for each day. Leave blank or check "Closed" for days you're not open.
+            </p>
+            
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Day</th>
+                            <th style="width: 20%;">Opens At</th>
+                            <th style="width: 20%;">Closes At</th>
+                            <th style="width: 10%;">Closed?</th>
+                            <th style="width: 35%;">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hoursTableBody">
+                        <tr><td colspan="5" class="text-center py-3 text-muted">Loading hours...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-4 p-3 rounded-3" style="background: #f8f9fa;">
+                <h6 class="fw-bold mb-2"><i class="bi bi-lightbulb me-2" style="color: #E8C07A;"></i>Current Display</h6>
+                <p id="hoursPreview" class="mb-0 text-muted small"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Pizza Modal -->
+<div class="modal fade" id="pizzaModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; max-height: 90vh;">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%); padding: 1.2rem 1.5rem;">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 45px; height: 45px; background: rgba(211,84,0,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-pizza" style="font-size: 1.3rem; color: #E8C07A;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title text-white" style="font-size: 1.2rem; font-weight: 700;" id="pizzaModalTitle">Add New Pizza</h5>
+                        <p class="text-white-50 small mb-0">Fill in the details below</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+            </div>
+            <form id="pizzaForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="pizzaId">
+                <div class="modal-body p-4" style="max-height: calc(90vh - 180px); overflow-y: auto;">
+                    <!-- Basic Info Section -->
+                    <div class="section-card mb-3 p-3 rounded-3" style="background: #f8f9fa;">
+                        <h6 class="fw-bold mb-2 text-uppercase small" style="color: var(--ember);">
+                            <i class="bi bi-info-circle-fill me-2"></i>Basic Information
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-semibold small">Pizza Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="pizzaName" placeholder="e.g., Margherita" required>
+                                <div class="error-message" id="pizzaNameError"></div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-semibold small">Category <span class="text-danger">*</span></label>
+                                <select class="form-control form-control-sm" id="pizzaCategory">
+                                    <option value="classics">Classics</option>
+                                    <option value="signature">Signature</option>
+                                    <option value="white">White Pizzas</option>
+                                    <option value="seasonal">Seasonal</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold small">Description</label>
+                            <textarea class="form-control form-control-sm" id="pizzaDescription" rows="2" placeholder="Describe the pizza..."></textarea>
+                            <div class="error-message" id="pizzaDescriptionError"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label fw-semibold small">Price (¥) <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">¥</span>
+                                    <input type="number" class="form-control" id="pizzaPrice" placeholder="0" required>
+                                </div>
+                                <div class="error-message" id="pizzaPriceError"></div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label fw-semibold small">Calories</label>
+                                <input type="number" class="form-control form-control-sm" id="pizzaCalories" placeholder="0">
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label fw-semibold small">Dietary Tags</label>
+                                <input type="text" class="form-control form-control-sm" id="pizzaDietary" placeholder="vegetarian, gluten-free">
+                                <small class="text-muted">Comma separated</small>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="pizzaBestseller">
+                                <label class="form-check-label fw-semibold small">Mark as Bestseller</label>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold small">Seasonal Note</label>
+                            <input type="text" class="form-control form-control-sm" id="pizzaSeasonalNote" placeholder="e.g., Available October–December">
+                        </div>
+                    </div>
+                    
+                    <!-- Farm & Location Section -->
+                    <div class="section-card mb-3 p-3 rounded-3" style="background: #f8f9fa;">
+                        <h6 class="fw-bold mb-2 text-uppercase small" style="color: var(--ember);">
+                            <i class="bi bi-pin-map-fill me-2"></i>Farm & Location
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-semibold small">Farm Partner</label>
+                                <input type="text" class="form-control form-control-sm" id="pizzaFarm" placeholder="e.g., Asama Farm, Miyota, Nagano">
+                                <div class="error-message" id="pizzaFarmError"></div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label fw-semibold small">Latitude</label>
+                                <input type="number" step="any" class="form-control form-control-sm" id="pizzaLat" placeholder="36.348">
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label fw-semibold small">Longitude</label>
+                                <input type="number" step="any" class="form-control form-control-sm" id="pizzaLng" placeholder="138.597">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold small">Farmer's Note / Farm Story</label>
+                            <textarea class="form-control form-control-sm" id="pizzaFarmStory" rows="2" placeholder="Tell the story of this farm..."></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i> 
+                                Click on the map to set coordinates, or enter them manually above.
+                            </small>
+                        </div>
+                        <div id="farmMapPreview" style="height: 180px; width: 100%; border-radius: 12px; border: 1px solid #ddd; background: #e8e4e0;"></div>
+                    </div>
+                    
+                    <!-- Pizza Image Section -->
+                    <div class="section-card mb-3 p-3 rounded-3" style="background: #f8f9fa;">
+                        <h6 class="fw-bold mb-2 text-uppercase small" style="color: var(--ember);">
+                            <i class="bi bi-image-fill me-2"></i>Pizza Image
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Upload Image</label>
+                                <input type="file" class="form-control form-control-sm" id="pizzaImageUpload" accept="image/*">
+                                <small class="text-muted">Recommended: 800x800px square</small>
+                                <div class="mt-2">
+                                    <label class="form-label fw-semibold small">OR Image URL</label>
+                                    <input type="text" class="form-control form-control-sm" id="pizzaImageUrl" placeholder="https://...">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Preview</label>
+                                <div id="pizzaImagePreview" style="min-height: 120px; border: 1px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden;">
+                                    <span style="color: #6c757d;">No image selected</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recommended Pairing Section -->
+                    <div class="section-card mb-2 p-3 rounded-3" style="background: #f8f9fa;">
+                        <h6 class="fw-bold mb-2 text-uppercase small" style="color: var(--ember);">
+                            <i class="bi bi-cup-straw me-2"></i>Recommended Pairing
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-semibold small">Pairing Name</label>
+                                <input type="text" class="form-control form-control-sm" id="pizzaRecommendedPairing" placeholder="e.g., Local Craft Beer">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-semibold small">Price (¥)</label>
+                                <input type="number" class="form-control form-control-sm" id="pizzaRecommendedPairingPrice" placeholder="0">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold small">Pairing Description</label>
+                            <input type="text" class="form-control form-control-sm" id="pizzaPairingDescription" placeholder="e.g., A spicy pizza needs a slightly bitter beer...">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Upload Pairing Image</label>
+                                <input type="file" class="form-control form-control-sm" id="pairingImageUpload" accept="image/*">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">OR Image URL</label>
+                                <input type="text" class="form-control form-control-sm" id="pizzaPairingImage" placeholder="https://...">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label fw-semibold small">Preview</label>
+                            <div id="pairingImagePreview" style="min-height: 80px; border: 1px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden;">
+                                <span style="color: #6c757d;">No image selected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 py-3" style="background: #f8f9fa;">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius: 50px;">Cancel</button>
+                    <button type="submit" class="btn px-4 text-white" id="pizzaSubmitBtn" style="background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50px;">
+                        <i class="bi bi-check-lg me-2"></i>Save Pizza
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Menu Item Modal -->
+<div class="modal fade" id="menuItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%); padding: 1.2rem 1.5rem;">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 45px; height: 45px; background: rgba(211,84,0,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-egg-fried" style="font-size: 1.3rem; color: #E8C07A;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title text-white" style="font-size: 1.1rem; font-weight: 700;" id="menuItemModalTitle">Add Menu Item</h5>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+            </div>
+            <form id="menuItemForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="menuItemId">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Item Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="menuItemName" placeholder="e.g., Garlic Bread" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Category <span class="text-danger">*</span></label>
+                        <select class="form-select" id="menuItemCategory">
+                            <option value="sides">Sides</option>
+                            <option value="drinks">Drinks</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Description</label>
+                        <input type="text" class="form-control" id="menuItemDescription" placeholder="Brief description...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Price (¥) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="menuItemPrice" placeholder="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Image</label>
+                        <input type="file" class="form-control" id="menuItemImageUpload" accept="image/*">
+                        <small class="text-muted">Recommended: 400x400px square</small>
+                        <div class="mt-2">
+                            <label class="form-label fw-semibold small">OR Image URL</label>
+                            <input type="text" class="form-control" id="menuItemImageUrl" placeholder="https://...">
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label fw-semibold small">Preview</label>
+                            <div id="menuItemImagePreview" style="min-height: 100px; border: 1px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden;">
+                                <span style="color: #6c757d;">No image selected</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="menuItemAvailable" checked>
+                            <label class="form-check-label fw-semibold small">Available for ordering</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 py-3" style="background: #f8f9fa;">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius: 50px;">Cancel</button>
+                    <button type="submit" class="btn px-4 text-white" style="background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50px;">
+                        <i class="bi bi-check-lg me-2"></i>Save Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%); padding: 2rem 2rem 1.5rem;">
+                <div class="text-center w-100">
+                    <div class="mb-3">
+                        <div style="width: 70px; height: 70px; background: rgba(211,84,0,0.15); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; animation: pulse 2s infinite;">
+                            <i class="bi bi-box-arrow-right" style="font-size: 2rem; color: #E8C07A;"></i>
+                        </div>
+                    </div>
+                    <h5 class="modal-title text-white" style="font-size: 1.5rem; font-weight: 700;">Ready to leave?</h5>
+                    <p class="text-white-50 mb-0 mt-2">Are you sure you want to log out of the admin dashboard?</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <p class="text-muted mb-4">You'll need to sign in again to access the admin portal.</p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary px-4 py-2" data-bs-dismiss="modal" style="border-radius: 50px; min-width: 120px;">
+                        <i class="bi bi-x-lg me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn px-4 py-2 text-white" onclick="confirmLogout()" style="background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50px; min-width: 120px;">
+                        <i class="bi bi-check-lg me-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Profile Modal -->
+<div class="modal fade" id="adminProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%); padding: 1.5rem 2rem;">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-person-gear" style="font-size: 1.5rem; color: white;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title text-white" style="font-size: 1.3rem; font-weight: 700;">Edit Admin Profile</h5>
+                        <p class="text-white-50 small mb-0">Update your account information</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="adminProfileForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary">Full Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="profileNameInput" placeholder="Admin Name" style="border-radius: 0 12px 12px 0;" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control border-start-0 ps-0" id="profileEmailInput" placeholder="admin@example.com" style="border-radius: 0 12px 12px 0;" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-telephone"></i></span>
+                            <input type="tel" class="form-control border-start-0 ps-0" id="profilePhoneInput" placeholder="+81 XX-XXXX-XXXX" style="border-radius: 0 12px 12px 0;">
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary">Current Password <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control border-start-0 border-end-0 ps-0" id="profileCurrentPassword" placeholder="Enter current password" required>
+                            <span class="input-group-text bg-light border-start-0" style="border-radius: 0 12px 12px 0; cursor: pointer;" onclick="togglePassword('profileCurrentPassword', this)"><i class="bi bi-eye"></i></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary">New Password (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-key"></i></span>
+                            <input type="password" class="form-control border-start-0 border-end-0 ps-0" id="profileNewPassword" placeholder="Leave blank to keep current">
+                            <span class="input-group-text bg-light border-start-0" style="border-radius: 0 12px 12px 0; cursor: pointer;" onclick="togglePassword('profileNewPassword', this)"><i class="bi bi-eye"></i></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary">Confirm New Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-shield-check"></i></span>
+                            <input type="password" class="form-control border-start-0 border-end-0 ps-0" id="profileConfirmPassword" placeholder="Confirm new password">
+                            <span class="input-group-text bg-light border-start-0" style="border-radius: 0 12px 12px 0; cursor: pointer;" onclick="togglePassword('profileConfirmPassword', this)"><i class="bi bi-eye"></i></span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius: 50px;">Cancel</button>
+                <button type="button" class="btn px-4 text-white" onclick="document.getElementById('adminProfileForm').dispatchEvent(new Event('submit'))" style="background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50px;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Message Modal -->
+<div class="modal fade" id="viewMessageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%); padding: 1.5rem 2rem;">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 50px; height: 50px; background: rgba(211,84,0,0.15); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-envelope-open" style="font-size: 1.5rem; color: #E8C07A;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title text-white" style="font-size: 1.3rem; font-weight: 700;">Message Details</h5>
+                        <p class="text-white-50 small mb-0" id="messageDateDisplay">Received on ...</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Sender Info Card -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background: #f8f9fa;">
+                            <label class="text-uppercase small fw-bold text-secondary mb-2">From</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;" id="messageSenderInitial">S</div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold" id="messageSenderName">Sender Name</h6>
+                                    <small class="text-muted" id="messageSenderEmail">email@example.com</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background: #f8f9fa;">
+                            <label class="text-uppercase small fw-bold text-secondary mb-2">Subject</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-tag-fill" style="color: #D35400;"></i>
+                                <span class="fw-semibold" id="messageSubjectDisplay">General Inquiry</span>
+                            </div>
+                            <div class="mt-2">
+                                <span class="badge-status" id="messageStatusBadge">New</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Message Content -->
+                <div class="mb-3">
+                    <label class="text-uppercase small fw-bold text-secondary mb-2">
+                        <i class="bi bi-chat-text-fill me-1"></i> Message
+                    </label>
+                    <div class="p-4 rounded-3" style="background: #f8f9fa; min-height: 150px; max-height: 300px; overflow-y: auto; line-height: 1.7;" id="messageContent">
+                        Message content will appear here...
+                    </div>
+                </div>
+                
+                <!-- Reply Section -->
+                <div class="mt-4">
+                    <label class="text-uppercase small fw-bold text-secondary mb-2">
+                        <i class="bi bi-reply-fill me-1"></i> Quick Reply
+                    </label>
+                    <textarea class="form-control rounded-3 mb-3" id="replyMessage" rows="3" placeholder="Type your reply here... (This will be sent via email)" style="resize: vertical;"></textarea>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius: 50px;">
+                            <i class="bi bi-x-lg me-2"></i>Close
+                        </button>
+                        <button type="button" class="btn px-4 text-white" onclick="sendReply()" style="background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50px;">
+                            <i class="bi bi-send-fill me-2"></i>Send Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 32px; overflow: hidden;">
+            <div class="modal-body p-0">
+                <div class="text-center p-4 p-lg-5">
+                    <!-- Animated Icon -->
+                    <div class="delete-icon-wrapper mb-4">
+                        <div class="delete-icon-circle">                            <i class="bi bi-pizza"></i>
+                        </div>
+                        <div class="delete-icon-pulse"></div>
+                    </div>
+                    
+                    <!-- Title -->
+                    <h4 class="fw-bold mb-2" style="color: #1a1a2e;">Delete Pizza?</h4>
+                    
+                    <!-- Pizza Name -->
+                    <p class="mb-2">
+                        You are about to delete 
+                        <span class="fw-bold" id="deletePizzaName" style="color: #D35400;">Margherita</span>
+                    </p>
+                    
+                    <!-- Warning Message -->
+                    <div class="warning-badge mb-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        This action cannot be undone
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-3 justify-content-center">
+                        <button type="button" class="btn-cancel-delete" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg me-2"></i>Cancel
+                        </button>
+                        <button type="button" class="btn-confirm-delete" id="confirmDeleteBtn">
+                            <i class="bi bi-trash3 me-2"></i>Delete Permanently
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Customer Confirmation Modal -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 32px; overflow: hidden;">
+            <div class="modal-body p-0">
+                <div class="text-center p-4 p-lg-5">
+                    <!-- Animated Icon -->
+                    <div class="delete-icon-wrapper mb-4">
+                        <div class="delete-icon-circle" style="background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%); border-radius: 30px;">
+                            <i class="bi bi-person-x" style="font-size: 3rem; color: white;"></i>
+                        </div>
+                        <div class="delete-icon-pulse" style="background: rgba(255, 71, 87, 0.3); border-radius: 30px;"></div>
+                    </div>
+                    
+                    <h4 class="fw-bold mb-2" style="color: #1a1a2e;">Delete Customer Account?</h4>
+                    
+                    <p class="mb-2">
+                        You are about to permanently delete the account of
+                        <span class="fw-bold" id="deleteCustomerName" style="color: #D35400;">Customer Name</span>
+                    </p>
+                    
+                    <p class="text-muted small mb-3">All orders, favorites, and personal data will be permanently removed.</p>
+                    
+                    <div class="warning-badge mb-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        This action cannot be undone
+                    </div>
+                    
+                    <div class="d-flex gap-3 justify-content-center">
+                        <button type="button" class="btn-cancel-delete" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg me-2"></i>Cancel
+                        </button>
+                        <button type="button" class="btn-confirm-delete" id="confirmDeleteCustomerBtn">
+                            <i class="bi bi-trash3 me-2"></i>Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // ==================== COMPLETE ADMIN DASHBOARD JAVASCRIPT ====================
+
+    // All JavaScript with NO Django template tags inside
+    var pizzaModal, menuItemModal, logoutModal, adminProfileModal, viewMessageModal;
+    var csrfToken = '{{ csrf_token }}';
+    var farmMap = null;
+    var farmMarker = null;
+
+    function showSection(sectionId) {
+        document.querySelectorAll('.section-content').forEach(function(s) { s.classList.remove('active'); });
+        document.getElementById(sectionId).classList.add('active');
+        document.querySelectorAll('.nav-link-admin').forEach(function(l) { l.classList.remove('active'); });
+        document.querySelector('[data-section="' + sectionId + '"]').classList.add('active');
+        var titles = { dashboard: 'Dashboard', pizzas: 'Pizza Management', menu_items: 'Sides & Drinks', orders: 'Order Management', customers: 'Customer Management', messages: 'Contact Messages' };
+        document.getElementById('pageTitle').textContent = titles[sectionId] || sectionId;
+    }
+
+    function updateOrderStatus(orderId, status) {
+        fetch('/admin-dashboard/order/' + orderId + '/status/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({status: status})
+        }).then(function() { location.reload(); });
+    }
+
+    // Show toast notification
+    function showToast(message, type) {
+        type = type || 'success';
+        var toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:1rem 1.5rem;background:' + (type === 'success' ? '#1a1a2e' : '#dc3545') + ';color:white;border-radius:16px;z-index:10000;box-shadow:0 20px 40px rgba(0,0,0,0.2);animation:slideInRight 0.3s ease;display:flex;align-items:center;gap:10px;';
+        toast.innerHTML = '<i class="bi bi-' + (type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill') + '"></i><span>' + message + '</span>';
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.style.animation = 'slideOutRight 0.3s ease'; setTimeout(function() { toast.remove(); }, 300); }, 3000);
+    }
+
+    // Toggle password visibility
+    function togglePassword(fieldId, btn) {
+        var field = document.getElementById(fieldId);
+        var icon = btn.querySelector('i');
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+
+    // ==================== VIEW ORDER DETAILS ====================
+
+    window.viewOrder = function(orderId) {
+        let row = document.querySelector(`#orders tr [data-id="${orderId}"]`)?.closest('tr');
+        if (!row) {
+            row = document.querySelector(`#dashboard [data-id="${orderId}"]`)?.closest('tr');
+        }
+        
+        if (!row) {
+            showToast('Order details not found', 'error');
+            return;
+        }
+        
+        const cells = row.querySelectorAll('td');
+        const orderNumber = cells[0].textContent.trim();
+        const customer = cells[1].textContent.trim();
+        
+        let itemsText = '';
+        let total = '';
+        let status = '';
+        let date = '';
+        let instructions = '';
+        
+        if (cells.length >= 7) {
+            itemsText = cells[2].textContent.trim();
+            total = cells[3].textContent.trim();
+            status = cells[4].querySelector('.badge-status')?.textContent.trim() || cells[4].textContent.trim();
+            date = cells[5].textContent.trim();
+        } else if (cells.length >= 6) {
+            total = cells[2].textContent.trim();
+            status = cells[3].querySelector('.badge-status')?.textContent.trim() || cells[3].textContent.trim();
+            date = cells[4].textContent.trim();
+            itemsText = 'View in Orders section for full details';
+        }
+        
+        // Fetch full order details from API
+        fetch(`/admin-dashboard/order/${orderId}/detail/`)
+            .then(r => r.json())
+            .then(orderData => {
+                let itemsHtml = '';
+                
+                if (orderData.items && Array.isArray(orderData.items)) {
+                    // Calculate subtotal from items
+                    let calculatedSubtotal = 0;
+                    itemsHtml = '<div class="order-items-list">';
+                    orderData.items.forEach(item => {
+                        const itemTotal = (item.price || 0) * (item.qty || 1);
+                        calculatedSubtotal += itemTotal;
+                        itemsHtml += `
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="badge bg-secondary rounded-pill">${item.qty || 1}x</span>
+                                    <span class="fw-semibold">${item.name}</span>
+                                </div>
+                                <span class="text-muted">¥${itemTotal.toLocaleString()}</span>
+                            </div>
+                        `;
+                    });
+                    // Add subtotal row
+                    itemsHtml += `
+                        <div class="d-flex justify-content-between align-items-center pt-3 mt-2">
+                            <span class="fw-bold">Subtotal</span>
+                            <span class="fw-bold">¥${calculatedSubtotal.toLocaleString()}</span>
+                        </div>
+                    `;
+                    itemsHtml += '</div>';
+                } else {
+                    // Fallback - parse from text
+                    const itemParts = itemsText.split(',').map(i => i.trim());
+                    itemsHtml = '<div class="order-items-list">';
+                    itemParts.forEach(item => {
+                        if (item) {
+                            itemsHtml += `
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="fw-semibold">${item}</span>
+                                </div>
+                            `;
+                        }
+                    });
+                    itemsHtml += '</div>';
+                }
+                
+                // Get instructions from API or from fallback
+                instructions = orderData.instructions || '';
+                
+                showOrderModal(orderNumber, customer, itemsHtml, total, status, date, instructions);
+            })
+            .catch(() => {
+                // Fallback if API fails
+                const itemParts = itemsText.split(',').map(i => i.trim());
+                let itemsHtml = '<div class="order-items-list">';
+                itemParts.forEach(item => {
+                    if (item) {
+                        itemsHtml += `
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span class="fw-semibold">${item}</span>
+                            </div>
+                        `;
+                    }
+                });
+                itemsHtml += '</div>';
+                
+                showOrderModal(orderNumber, customer, itemsHtml, total, status, date, '');
+            });
+    };
+
+    function showOrderModal(orderNumber, customer, itemsHtml, total, status, date, instructions) {
+        const statusClass = status.toLowerCase();
+        
+        // Format instructions
+        const instructionsHtml = instructions && instructions.trim() ? `
+            <div class="mb-4">
+                <label class="text-uppercase small fw-bold text-secondary mb-2">
+                    <i class="bi bi-chat-text me-1"></i> Special Instructions
+                </label>
+                <div class="p-3 rounded-3" style="background: #fff8e1; border-left: 3px solid #E8C07A; font-style: italic;">
+                    <i class="bi bi-info-circle me-2" style="color: #D35400;"></i>${instructions}
+                </div>
+            </div>
+        ` : '';
+        
+        const modalHtml = `
+            <div class="modal fade" id="orderDetailModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+                        <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #1a1a2e, #2d2d4e); padding: 1.5rem 2rem;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width: 50px; height: 50px; background: rgba(232,192,122,0.15); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-receipt" style="font-size: 1.5rem; color: #E8C07A;"></i>
+                                </div>
+                                <div>
+                                    <h5 class="modal-title text-white" style="font-size: 1.3rem; font-weight: 700;">${orderNumber}</h5>
+                                    <p class="text-white-50 small mb-0">${date}</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded-3" style="background: #f8f9fa;">
+                                        <label class="text-uppercase small fw-bold text-secondary mb-2">Customer</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+                                                ${customer.charAt(0).toUpperCase()}
+                                            </div>
+                                            <span class="fw-semibold">${customer}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded-3" style="background: #f8f9fa;">
+                                        <label class="text-uppercase small fw-bold text-secondary mb-2">Total</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-currency-yen" style="color: #D35400; font-size: 1.2rem;"></i>
+                                            <span class="fw-bold" style="font-size: 1.3rem; color: #D35400;">${total}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="text-uppercase small fw-bold text-secondary mb-2">
+                                    <i class="bi bi-basket me-1"></i> Order Items
+                                </label>
+                                <div class="p-4 rounded-3" style="background: #f8f9fa;">
+                                    ${itemsHtml}
+                                </div>
+                            </div>
+                            
+                            ${instructionsHtml}
+                            
+                            <div class="d-flex justify-content-between align-items-center p-3 rounded-3" style="background: #f8f9fa;">
+                                <span class="text-uppercase small fw-bold text-secondary">Status</span>
+                                <span class="badge-status badge-${statusClass}" style="font-size: 0.85rem; padding: 0.5rem 1.2rem;">
+                                    ${status}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius: 50px;">
+                                <i class="bi bi-x-lg me-2"></i>Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const existing = document.getElementById('orderDetailModal');
+        if (existing) existing.remove();
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+        modal.show();
+        
+        document.getElementById('orderDetailModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    }
+
+    // ==================== DELETE CUSTOMER WITH MODAL ====================
+
+    let deleteCustomerModal;
+    let currentCustomerIdToDelete = null;
+    let currentCustomerNameToDelete = '';
+
+    // Initialize modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('deleteCustomerModal');
+        if (modalEl) {
+            deleteCustomerModal = new bootstrap.Modal(modalEl);
+        }
+    });
+
+    window.deleteCustomer = function(customerId, customerName) {
+        currentCustomerIdToDelete = customerId;
+        currentCustomerNameToDelete = customerName;
+        
+        document.getElementById('deleteCustomerName').textContent = customerName;
+        
+        const confirmBtn = document.getElementById('confirmDeleteCustomerBtn');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="bi bi-trash3 me-2"></i>Delete Account';
+        
+        deleteCustomerModal.show();
+    };
+
+    // Handle confirm delete
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmBtn = document.getElementById('confirmDeleteCustomerBtn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function() {
+                if (!currentCustomerIdToDelete) return;
+                
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Deleting...';
+                
+                fetch('/ajax/delete-account/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ 
+                        user_id: currentCustomerIdToDelete,
+                        admin_action: true 
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        deleteCustomerModal.hide();
+                        showToast(`Customer "${currentCustomerNameToDelete}" deleted`, 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast(data.message || 'Error deleting customer', 'error');
+                        this.disabled = false;
+                        this.innerHTML = '<i class="bi bi-trash3 me-2"></i>Delete Account';
+                    }
+                })
+                .catch(() => {
+                    showToast('Network error', 'error');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-trash3 me-2"></i>Delete Account';
+                });
+            });
+        }
+    });
+
+    // ==================== REAL-TIME VALIDATION ====================
+
+    function validatePizzaName(value) {
+        if (!value || value.trim().length < 2) {
+            return 'Pizza name must be at least 2 characters';
+        }
+        if (value.length > 100) {
+            return 'Pizza name cannot exceed 100 characters';
+        }
+        return '';
+    }
+
+    function validatePizzaPrice(value) {
+        if (!value || value <= 0) {
+            return 'Price must be greater than 0';
+        }
+        if (value > 10000) {
+            return 'Price seems too high';
+        }
+        return '';
+    }
+
+    function validatePizzaDescription(value) {
+        if (value && value.length < 10) {
+            return 'Description should be at least 10 characters';
+        }
+        return '';
+    }
+
+    function validatePizzaFarm(value) {
+        if (value && value.length < 3) {
+            return 'Farm name should be at least 3 characters';
+        }
+        return '';
+    }
+
+    function showFieldError(inputEl, errorEl, message) {
+        if (!errorEl) return false;
+        if (message) {
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            inputEl.classList.add('error');
+            inputEl.classList.remove('success');
+            return false;
+        } else {
+            errorEl.textContent = '';
+            errorEl.classList.remove('show');
+            inputEl.classList.remove('error');
+            inputEl.classList.add('success');
+            return true;
+        }
+    }
+
+    function isPizzaFormValid() {
+        var nameValid = !validatePizzaName(document.getElementById('pizzaName').value);
+        var priceValid = !validatePizzaPrice(document.getElementById('pizzaPrice').value);
+        return nameValid && priceValid;
+    }
+
+    function updatePizzaSubmitButton() {
+        var submitBtn = document.getElementById('pizzaSubmitBtn');
+        if (submitBtn) {
+            var isValid = isPizzaFormValid();
+            submitBtn.disabled = !isValid;
+            submitBtn.style.opacity = isValid ? '1' : '0.6';
+            submitBtn.style.cursor = isValid ? 'pointer' : 'not-allowed';
+        }
+    }
+
+    // ==================== FARM MAP FUNCTIONS ====================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var pizzaModalEl = document.getElementById('pizzaModal');
+        if (pizzaModalEl) {
+            pizzaModalEl.addEventListener('shown.bs.modal', function() {
+                setTimeout(function() {
+                    initFarmMap();
+                }, 200);
+            });
+            
+            pizzaModalEl.addEventListener('hidden.bs.modal', function() {
+                if (farmMap) {
+                    farmMap.remove();
+                    farmMap = null;
+                    farmMarker = null;
+                }
+            });
+        }
+    });
+
+    function initFarmMap() {
+        var mapContainer = document.getElementById('farmMapPreview');
+        if (!mapContainer) return;
+        
+        var latInput = document.getElementById('pizzaLat');
+        var lngInput = document.getElementById('pizzaLng');
+        
+        var lat = parseFloat(latInput.value) || 36.348;
+        var lng = parseFloat(lngInput.value) || 138.597;
+        
+        if (farmMap) {
+            farmMap.remove();
+            farmMap = null;
+        }
+        
+        farmMap = L.map('farmMapPreview').setView([lat, lng], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(farmMap);
+        
+        farmMarker = L.marker([lat, lng], { draggable: true }).addTo(farmMap);
+        
+        farmMarker.on('dragend', function(e) {
+            var position = farmMarker.getLatLng();
+            latInput.value = position.lat.toFixed(6);
+            lngInput.value = position.lng.toFixed(6);
+        });
+        
+        farmMap.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            farmMarker.setLatLng([lat, lng]);
+            latInput.value = lat.toFixed(6);
+            lngInput.value = lng.toFixed(6);
+        });
+    }
+
+    function updateMapFromCoords() {
+        var lat = parseFloat(document.getElementById('pizzaLat').value);
+        var lng = parseFloat(document.getElementById('pizzaLng').value);
+        
+        if (!isNaN(lat) && !isNaN(lng) && farmMap && farmMarker) {
+            farmMarker.setLatLng([lat, lng]);
+            farmMap.setView([lat, lng], farmMap.getZoom());
+        }
+    }
+
+    // ==================== IMAGE PREVIEW FUNCTIONS ====================
+
+    function updateImagePreview(src) {
+        var preview = document.getElementById('pizzaImagePreview');
+        if (!preview) return;
+        
+        preview.innerHTML = '';
+        
+        if (src && src !== 'null' && src !== 'None' && src.trim() !== '') {
+            var img = document.createElement('img');
+            img.src = src;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '120px';
+            img.style.borderRadius = '8px';
+            img.style.objectFit = 'contain';
+            img.onerror = function() {
+                preview.innerHTML = '<span style="color: #6c757d;">Invalid image</span>';
+            };
+            preview.appendChild(img);
+            preview.dataset.currentImage = src;
+        } else {
+            preview.innerHTML = '<span style="color: #6c757d;">No image selected</span>';
+            preview.dataset.currentImage = '';
+        }
+    }
+
+    function updatePairingImagePreview(src) {
+        var preview = document.getElementById('pairingImagePreview');
+        if (!preview) return;
+        
+        // Clear previous content
+        preview.innerHTML = '';
+        
+        if (src && src !== 'null' && src !== 'None' && src.trim() !== '') {
+            var img = document.createElement('img');
+            img.src = src;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '80px';
+            img.style.borderRadius = '8px';
+            img.style.objectFit = 'contain';
+            img.onerror = function() {
+                preview.innerHTML = '<span style="color: #6c757d;">Invalid image</span>';
+            };
+            preview.appendChild(img);
+            preview.dataset.currentImage = src;
+        } else {
+            preview.innerHTML = '<span style="color: #6c757d;">No image selected</span>';
+            preview.dataset.currentImage = '';
+        }
+    }
+
+    // ==================== PIZZA CRUD FUNCTIONS ====================
+
+    window.openPizzaModal = function() {
+        document.getElementById('pizzaForm').reset();
+        document.getElementById('pizzaId').value = '';
+        document.getElementById('pizzaModalTitle').textContent = 'Add New Pizza';
+        document.getElementById('pizzaImageUpload').value = '';
+        document.getElementById('pizzaImageUrl').value = '';
+        document.getElementById('pairingImageUpload').value = '';
+        updateImagePreview('');
+        updatePairingImagePreview('');
+        
+        document.querySelectorAll('.error-message').forEach(function(el) {
+            el.classList.remove('show');
+            el.textContent = '';
+        });
+        document.querySelectorAll('.form-control, .form-select').forEach(function(el) {
+            el.classList.remove('error', 'success');
+        });
+        
+        updatePizzaSubmitButton();
+        pizzaModal.show();
+    };
+
+    window.editPizza = function(id) {
+        fetch('/admin-dashboard/pizza/' + id + '/')
+            .then(function(r) { return r.json(); })
+            .then(function(p) {
+                console.log('Pizza data:', p); // Debug - check what's returned
+                
+                document.getElementById('pizzaId').value = p.id;
+                document.getElementById('pizzaName').value = p.name || '';
+                document.getElementById('pizzaCategory').value = p.category || 'classics';
+                document.getElementById('pizzaDescription').value = p.description || '';
+                document.getElementById('pizzaPrice').value = p.price || '';
+                document.getElementById('pizzaCalories').value = p.calories || '';
+                document.getElementById('pizzaDietary').value = (p.dietary || []).join(', ');
+                document.getElementById('pizzaBestseller').checked = !!p.bestseller;
+                document.getElementById('pizzaSeasonalNote').value = p.seasonal_note || '';
+                document.getElementById('pizzaFarm').value = p.farm || '';
+                document.getElementById('pizzaLat').value = p.latitude || 36.348;
+                document.getElementById('pizzaLng').value = p.longitude || 138.597;
+                document.getElementById('pizzaFarmStory').value = p.farm_story || '';
+                document.getElementById('pizzaRecommendedPairing').value = p.recommended_pairing || '';
+                document.getElementById('pizzaRecommendedPairingPrice').value = p.recommended_pairing_price || '';
+                document.getElementById('pizzaPairingDescription').value = p.recommended_pairing_description || '';
+                
+                // Handle pairing image
+                var pairingImage = p.recommended_pairing_image || '';
+                document.getElementById('pizzaPairingImage').value = pairingImage;
+                
+                document.getElementById('pizzaImageUpload').value = '';
+                document.getElementById('pizzaImageUrl').value = p.image || '';
+                updateImagePreview(p.image || '');
+                
+                document.getElementById('pairingImageUpload').value = '';
+                
+                // Update pairing image preview - check if there's an image
+                if (pairingImage && pairingImage !== 'null' && pairingImage !== 'None') {
+                    updatePairingImagePreview(pairingImage);
+                } else {
+                    updatePairingImagePreview('');
+                }
+                
+                document.querySelectorAll('.error-message').forEach(function(el) {
+                    el.classList.remove('show');
+                });
+                document.querySelectorAll('.form-control').forEach(function(el) {
+                    el.classList.remove('error', 'success');
+                });
+                
+                document.getElementById('pizzaModalTitle').textContent = 'Edit Pizza';
+                updatePizzaSubmitButton();
+                pizzaModal.show();
+                
+                // Update map after modal is shown
+                setTimeout(function() {
+                    if (farmMap) {
+                        farmMap.setView([p.latitude || 36.348, p.longitude || 138.597], 10);
+                        if (farmMarker) {
+                            farmMarker.setLatLng([p.latitude || 36.348, p.longitude || 138.597]);
+                        }
+                    }
+                }, 300);
+            })
+            .catch(function(error) {
+                console.error('Error loading pizza:', error);
+                showToast('Error loading pizza data', 'error');
+            });
+    };
+
+    // ==================== DELETE PIZZA WITH ANIMATED MODAL ====================
+
+    let deleteConfirmModal;
+    let currentPizzaIdToDelete = null;
+    let currentPizzaNameToDelete = '';
+
+    // Initialize the delete modal when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    });
+
+    window.deletePizza = function(id, pizzaName) {
+        // Store the pizza info for confirmation
+        currentPizzaIdToDelete = id;
+        currentPizzaNameToDelete = pizzaName;
+        
+        // Update the modal with pizza name
+        document.getElementById('deletePizzaName').textContent = pizzaName;
+        
+        // Reset button state
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="bi bi-trash3 me-2"></i>Delete Permanently';
+        
+        // Show the modal
+        deleteConfirmModal.show();
+    };
+
+    // Handle confirm delete button click
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function() {
+                if (!currentPizzaIdToDelete) return;
+                
+                // Update button state to loading
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Deleting...';
+                
+                // Perform the delete request
+                fetch('/admin-dashboard/pizza/' + currentPizzaIdToDelete + '/delete/', { 
+                    method: 'POST', 
+                    headers: {'X-CSRFToken': csrfToken} 
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) {
+                        // Hide modal
+                        deleteConfirmModal.hide();
+                        
+                        // Show success message with animation
+                        showDeleteSuccessToast(d.message, currentPizzaNameToDelete);
+                        
+                        // Reload after delay
+                        setTimeout(function() { 
+                            location.reload(); 
+                        }, 1500);
+                    } else {
+                        // Reset button on error
+                        confirmBtn.disabled = false;
+                        confirmBtn.innerHTML = '<i class="bi bi-trash3 me-2"></i>Delete Permanently';
+                        
+                        // Show error
+                        showToast(d.message || 'Error deleting pizza', 'error');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Delete error:', error);
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="bi bi-trash3 me-2"></i>Delete Permanently';
+                    showToast('Network error. Please try again.', 'error');
+                });
+            });
+        }
+
+        // View order button
+        document.querySelectorAll('[data-action="view-order"]').forEach(btn => {
+            btn.addEventListener('click', function() { viewOrder(this.dataset.id); });
+        });
+
+        // Delete customer button
+        document.querySelectorAll('[data-action="delete-customer"]').forEach(btn => {
+            btn.addEventListener('click', function() { 
+                deleteCustomer(this.dataset.id, this.dataset.name); 
+            });
+        });
+    });
+
+    // Animated success toast for deletion
+    function showDeleteSuccessToast(message, pizzaName) {
+        var toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%);
+            color: white;
+            border-radius: 16px;
+            z-index: 10000;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 5px solid #ff4757;
+        `;
+        
+        toast.innerHTML = `
+            <div style="width: 40px; height: 40px; background: rgba(255, 71, 87, 0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-check-circle-fill" style="color: #ff6b81; font-size: 1.5rem;"></i>
+            </div>
+            <div>
+                <div style="font-weight: 700; margin-bottom: 2px;">Pizza Deleted</div>
+                <div style="font-size: 0.85rem; opacity: 0.8;">"${pizzaName}" has been permanently removed.</div>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(function() { 
+            toast.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(function() { 
+                if (toast.parentNode) toast.remove(); 
+            }, 300);
+        }, 3000);
+    }
+
+    // ==================== MENU ITEM FUNCTIONS ====================
+
+    // Preview for menu item image
+    function updateMenuItemImagePreview(src) {
+        var preview = document.getElementById('menuItemImagePreview');
+        if (!preview) return;
+        
+        preview.innerHTML = '';
+        
+        if (src && src !== 'null' && src !== 'None' && src.trim() !== '') {
+            var img = document.createElement('img');
+            img.src = src;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100px';
+            img.style.borderRadius = '8px';
+            img.style.objectFit = 'contain';
+            img.onerror = function() {
+                preview.innerHTML = '<span style="color: #6c757d;">Invalid image</span>';
+            };
+            preview.appendChild(img);
+            preview.dataset.currentImage = src;
+        } else {
+            preview.innerHTML = '<span style="color: #6c757d;">No image selected</span>';
+            preview.dataset.currentImage = '';
+        }
+    }
+
+    window.openMenuItemModal = function() {
+        document.getElementById('menuItemForm').reset();
+        document.getElementById('menuItemId').value = '';
+        document.getElementById('menuItemCategory').value = 'sides';
+        document.getElementById('menuItemModalTitle').textContent = 'Add Menu Item';
+        document.getElementById('menuItemImageUpload').value = '';
+        document.getElementById('menuItemImageUrl').value = '';
+        updateMenuItemImagePreview('');
+        menuItemModal.show();
+    };
+
+    window.editMenuItem = function(id) {
+        fetch('/admin-dashboard/menu-item/' + id + '/')
+            .then(function(r) { return r.json(); })
+            .then(function(i) {
+                document.getElementById('menuItemId').value = i.id;
+                document.getElementById('menuItemName').value = i.name;
+                document.getElementById('menuItemCategory').value = i.category;
+                document.getElementById('menuItemDescription').value = i.description || '';
+                document.getElementById('menuItemPrice').value = i.price;
+                document.getElementById('menuItemAvailable').checked = i.is_available;
+                
+                // Reset file input
+                document.getElementById('menuItemImageUpload').value = '';
+                document.getElementById('menuItemImageUrl').value = i.image || '';
+                
+                // Show existing image preview
+                updateMenuItemImagePreview(i.image || '');
+                
+                document.getElementById('menuItemModalTitle').textContent = 'Edit Menu Item';
+                menuItemModal.show();
+            })
+            .catch(function() {
+                showToast('Error loading menu item', 'error');
+            });
+    };
+
+    window.deleteMenuItem = function(id) {
+        if (confirm('Delete this menu item? This cannot be undone.')) {
+            fetch('/admin-dashboard/menu-item/' + id + '/delete/', { 
+                method: 'POST', 
+                headers: {'X-CSRFToken': csrfToken} 
+            })
+            .then(function() { location.reload(); })
+            .catch(function() { showToast('Error deleting item', 'error'); });
+        }
+    };
+
+    // Menu item image upload preview
+    document.addEventListener('DOMContentLoaded', function() {
+        var menuItemImageUpload = document.getElementById('menuItemImageUpload');
+        if (menuItemImageUpload) {
+            menuItemImageUpload.addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(event) {
+                        updateMenuItemImagePreview(event.target.result);
+                        document.getElementById('menuItemImageUrl').value = '';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        var menuItemImageUrl = document.getElementById('menuItemImageUrl');
+        if (menuItemImageUrl) {
+            menuItemImageUrl.addEventListener('input', function(e) {
+                var url = e.target.value.trim();
+                if (url) {
+                    updateMenuItemImagePreview(url);
+                    document.getElementById('menuItemImageUpload').value = '';
+                }
+            });
+        }
+        
+        // Update event listener for add menu item button
+        document.querySelectorAll('[data-action="add-menu-item"]').forEach(function(btn) {
+            btn.addEventListener('click', function() { 
+                openMenuItemModal(); 
+            });
+        });
+    });
+
+    // Menu Item Form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        var menuItemForm = document.getElementById('menuItemForm');
+        if (menuItemForm) {
+            menuItemForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var itemId = document.getElementById('menuItemId').value;
+                var imageFile = document.getElementById('menuItemImageUpload').files[0];
+                var imageUrl = document.getElementById('menuItemImageUrl').value.trim();
+                
+                var formData = new FormData();
+                formData.append('name', document.getElementById('menuItemName').value);
+                formData.append('category', document.getElementById('menuItemCategory').value);
+                formData.append('description', document.getElementById('menuItemDescription').value);
+                formData.append('price', document.getElementById('menuItemPrice').value);
+                formData.append('is_available', document.getElementById('menuItemAvailable').checked);
+                formData.append('csrfmiddlewaretoken', csrfToken);
+                
+                if (imageFile) {
+                    formData.append('image_file', imageFile);
+                } else if (imageUrl) {
+                    formData.append('image_url', imageUrl);
+                }
+                
+                var url = itemId ? '/admin-dashboard/menu-item/' + itemId + '/update/' : '/admin-dashboard/menu-item/create/';
+                
+                fetch(url, { 
+                    method: 'POST', 
+                    headers: {'X-CSRFToken': csrfToken},
+                    body: formData
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) {
+                        menuItemModal.hide();
+                        showToast(d.message || 'Menu item saved!', 'success');
+                        setTimeout(function() { location.reload(); }, 1000);
+                    } else {
+                        showToast(d.message || 'Error saving item', 'error');
+                    }
+                })
+                .catch(function() {
+                    showToast('Network error', 'error');
+                });
+            });
+        }
+    });
+
+    // ==================== MESSAGE FUNCTIONS ====================
+
+    var currentMessageId = null;
+
+    window.viewMessage = function(id) {
+        currentMessageId = id;
+        
+        document.getElementById('messageSenderName').textContent = 'Loading...';
+        document.getElementById('messageSenderEmail').textContent = '';
+        document.getElementById('messageSubjectDisplay').textContent = '';
+        document.getElementById('messageContent').textContent = 'Loading message...';
+        document.getElementById('messageDateDisplay').textContent = '';
+        document.getElementById('messageStatusBadge').textContent = '';
+        
+        viewMessageModal.show();
+        
+        fetch('/admin-dashboard/message/' + id + '/')
+            .then(function(r) { return r.json(); })
+            .then(function(m) {
+                document.getElementById('messageSenderName').textContent = m.name;
+                document.getElementById('messageSenderEmail').textContent = m.email;
+                document.getElementById('messageSenderInitial').textContent = m.name.charAt(0).toUpperCase();
+                document.getElementById('messageSubjectDisplay').textContent = m.subject_display;
+                document.getElementById('messageContent').textContent = m.message;
+                document.getElementById('messageDateDisplay').textContent = 'Received on ' + m.date;
+                
+                var badge = document.getElementById('messageStatusBadge');
+                badge.textContent = m.status_display;
+                badge.className = 'badge-status';
+                if (m.status === 'new') {
+                    badge.classList.add('badge-new');
+                } else if (m.status === 'replied') {
+                    badge.classList.add('badge-replied');
+                } else if (m.status === 'read') {
+                    badge.style.background = '#e3f2fd';
+                    badge.style.color = '#1565c0';
+                } else {
+                    badge.style.background = '#f5f5f5';
+                    badge.style.color = '#666';
+                }
+                
+                document.getElementById('replyMessage').value = '';
+            })
+            .catch(function() {
+                document.getElementById('messageContent').textContent = 'Error loading message.';
+            });
+    };
+
+    window.sendReply = function() {
+        var replyText = document.getElementById('replyMessage').value.trim();
+        
+        if (!replyText) {
+            showToast('Please enter a reply message', 'error');
+            return;
+        }
+        
+        if (!currentMessageId) {
+            showToast('No message selected', 'error');
+            return;
+        }
+        
+        var btn = event.target;
+        var originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Sending...';
+        
+        fetch('/admin-dashboard/message/' + currentMessageId + '/reply/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ reply: replyText })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                showToast('Reply sent successfully!', 'success');
+                viewMessageModal.hide();
+                setTimeout(function() { location.reload(); }, 1000);
+            } else {
+                showToast(data.message || 'Error sending reply', 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        })
+        .catch(function() {
+            showToast('Network error', 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    };
+
+    // ==================== ADMIN PROFILE FUNCTIONS ====================
+
+    window.openAdminProfileModal = function() {
+        fetch('/admin-dashboard/profile/')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                document.getElementById('profileNameInput').value = data.name || '';
+                document.getElementById('profileEmailInput').value = data.email || '';
+                document.getElementById('profilePhoneInput').value = data.phone || '';
+                document.getElementById('profileCurrentPassword').value = '';
+                document.getElementById('profileNewPassword').value = '';
+                document.getElementById('profileConfirmPassword').value = '';
+                adminProfileModal.show();
+            })
+            .catch(function() {
+                showToast('Error loading profile', 'error');
+            });
+    };
+
+    // ==================== LOGOUT FUNCTIONS ====================
+
+    window.confirmLogout = function() {
+        window.location.href = '/logout/';
+    };
+
+    // ==================== BUSINESS HOURS MANAGEMENT ====================
+
+    let allHours = [];
+
+    // Load hours when section is shown
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelector('[data-section="hours"]')?.addEventListener('click', loadHours);
+    });
+
+    function loadHours() {
+        fetch('/admin-dashboard/hours/')
+            .then(r => r.json())
+            .then(data => {
+                allHours = data.hours;
+                renderHoursTable();
+                updateHoursPreview();
+            })
+            .catch(() => showToast('Error loading hours', 'error'));
+    }
+
+    function renderHoursTable() {
+        const tbody = document.getElementById('hoursTableBody');
+        if (!tbody) return;
+        
+        // Order days correctly
+        const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        
+        let html = '';
+        dayOrder.forEach(day => {
+            const h = allHours.find(h => h.day === day) || { day, open_time: '', close_time: '', is_closed: false, note: '' };
+            const dayDisplay = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayOrder.indexOf(day)];
+            
+            html += `
+                <tr data-day="${day}">
+                    <td>
+                        <strong>${dayDisplay}</strong>
+                    </td>
+                    <td>
+                        <input type="time" class="form-control form-control-sm open-time" 
+                            value="${h.open_time || ''}" 
+                            ${h.is_closed ? 'disabled' : ''}
+                            data-day="${day}">
+                    </td>
+                    <td>
+                        <input type="time" class="form-control form-control-sm close-time" 
+                            value="${h.close_time || ''}" 
+                            ${h.is_closed ? 'disabled' : ''}
+                            data-day="${day}">
+                    </td>
+                    <td>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input closed-check" 
+                                data-day="${day}" ${h.is_closed ? 'checked' : ''}>
+                            <label class="form-check-label small">Closed</label>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm note-input" 
+                            value="${h.note || ''}" 
+                            placeholder="e.g., Extended hours, Special event"
+                            data-day="${day}">
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        
+        // Add event listeners
+        tbody.querySelectorAll('.closed-check').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const row = this.closest('tr');
+                const isClosed = this.checked;
+                row.querySelector('.open-time').disabled = isClosed;
+                row.querySelector('.close-time').disabled = isClosed;
+                
+                // Clear times if closed
+                if (isClosed) {
+                    row.querySelector('.open-time').value = '';
+                    row.querySelector('.close-time').value = '';
+                }
+                
+                updateHoursPreview();
+            });
+        });
+        
+        tbody.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', updateHoursPreview);
+            input.addEventListener('change', updateHoursPreview);
+        });
+    }
+
+    function updateHoursPreview() {
+        const preview = document.getElementById('hoursPreview');
+        if (!preview) return;
+        
+        const rows = document.querySelectorAll('#hoursTableBody tr[data-day]');
+        const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        let html = '';
+        
+        rows.forEach(row => {
+            const day = row.dataset.day;
+            const dayIndex = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].indexOf(day);
+            const dayDisplay = dayNames[dayIndex] || day;
+            const isClosed = row.querySelector('.closed-check')?.checked;
+            const openTime = row.querySelector('.open-time')?.value || '';
+            const closeTime = row.querySelector('.close-time')?.value || '';
+            const note = row.querySelector('.note-input')?.value || '';
+            
+            if (isClosed) {
+                html += `<span style="color: #999;">${dayDisplay}: Closed${note ? ' - ' + note : ''}</span><br>`;
+            } else if (openTime && closeTime) {
+                html += `<strong>${dayDisplay}:</strong> ${openTime} – ${closeTime}${note ? ' (' + note + ')' : ''}<br>`;
+            } else {
+                html += `<span style="color: #999;">${dayDisplay}: Not set</span><br>`;
+            }
+        });
+        
+        preview.innerHTML = html || 'No hours set';
+    }
+
+    function saveHours() {
+        const rows = document.querySelectorAll('#hoursTableBody tr[data-day]');
+        const hours = [];
+        
+        rows.forEach(row => {
+            const day = row.dataset.day;
+            hours.push({
+                day: day,
+                open_time: row.querySelector('.open-time')?.value || null,
+                close_time: row.querySelector('.close-time')?.value || null,
+                is_closed: row.querySelector('.closed-check')?.checked || false,
+                note: row.querySelector('.note-input')?.value || ''
+            });
+        });
+        
+        fetch('/admin-dashboard/hours/update/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ hours: hours })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Hours updated successfully!', 'success');
+            } else {
+                showToast(data.message || 'Error saving hours', 'error');
+            }
+        })
+        .catch(() => showToast('Network error', 'error'));
+    }
+
+    // ==================== FORM SUBMISSIONS ====================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Navigation
+        document.querySelectorAll('.nav-link-admin[data-section]').forEach(function(link) {
+            link.addEventListener('click', function(e) { 
+                e.preventDefault(); 
+                showSection(this.dataset.section); 
+            });
+        });
+        
+        // Mobile menu
+        var menuToggle = document.getElementById('menuToggle');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', function() { 
+                document.getElementById('adminSidebar').classList.toggle('active'); 
+            });
+        }
+        
+        // Initialize modals
+        pizzaModal = new bootstrap.Modal(document.getElementById('pizzaModal'));
+        menuItemModal = new bootstrap.Modal(document.getElementById('menuItemModal'));
+        logoutModal = new bootstrap.Modal(document.getElementById('logoutModal'));
+        adminProfileModal = new bootstrap.Modal(document.getElementById('adminProfileModal'));
+        viewMessageModal = new bootstrap.Modal(document.getElementById('viewMessageModal'));
+        
+        // Admin profile click
+        var adminProfile = document.querySelector('.admin-profile');
+        if (adminProfile) {
+            adminProfile.addEventListener('click', function() {
+                openAdminProfileModal();
+            });
+        }
+        
+        // Action buttons
+        document.querySelectorAll('[data-action="show-pizzas"]').forEach(function(btn) { 
+            btn.addEventListener('click', function() { showSection('pizzas'); }); 
+        });
+        document.querySelectorAll('[data-action="show-menu-items"]').forEach(function(btn) { 
+            btn.addEventListener('click', function() { showSection('menu_items'); }); 
+        });
+        document.querySelectorAll('[data-action="show-messages"]').forEach(function(btn) { 
+            btn.addEventListener('click', function() { showSection('messages'); }); 
+        });
+        document.querySelectorAll('[data-action="add-pizza"]').forEach(function(btn) { 
+            btn.addEventListener('click', function() { openPizzaModal(); }); 
+        });
+        
+        document.querySelectorAll('[data-action="edit-pizza"]').forEach(function(btn) {
+            btn.addEventListener('click', function() { editPizza(this.dataset.id); });
+        });
+        document.querySelectorAll('[data-action="delete-pizza"]').forEach(function(btn) {
+            btn.addEventListener('click', function() { 
+                // Get pizza name from the same row
+                const row = this.closest('tr');
+                const nameCell = row ? row.querySelector('td:first-child strong') : null;
+                const pizzaName = nameCell ? nameCell.textContent : 'this pizza';
+                
+                deletePizza(this.dataset.id, pizzaName); 
+            });
+        });
+        document.querySelectorAll('[data-action="add-menu-item"]').forEach(function(btn) {
+            btn.addEventListener('click', function() { openMenuItemModal(this.dataset.category); });
+        });
+        document.querySelectorAll('[data-action="edit-menu-item"]').forEach(function(btn) {
+            btn.addEventListener('click', function() { editMenuItem(this.dataset.id); });
+        });
+        document.querySelectorAll('[data-action="delete-menu-item"]').forEach(function(btn) {
+            btn.addEventListener('click', function() { deleteMenuItem(this.dataset.id); });
+        });
+        document.querySelectorAll('[data-action="view-message"]').forEach(function(btn) {
+            btn.addEventListener('click', function() { viewMessage(this.dataset.id); });
+        });
+        
+        // Logout link
+        var logoutLink = document.querySelector('a[data-action="logout"]');
+        if (logoutLink) {
+            logoutLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                logoutModal.show();
+            });
+        }
+        
+        // Order status selects
+        document.querySelectorAll('.status-select').forEach(function(select) {
+            select.addEventListener('change', function() { 
+                updateOrderStatus(this.dataset.orderId, this.value); 
+            });
+        });
+        
+        // Coordinate inputs
+        var latInput = document.getElementById('pizzaLat');
+        var lngInput = document.getElementById('pizzaLng');
+        if (latInput && lngInput) {
+            latInput.addEventListener('change', updateMapFromCoords);
+            lngInput.addEventListener('change', updateMapFromCoords);
+        }
+        
+        // Image upload preview
+        var imageUpload = document.getElementById('pizzaImageUpload');
+        if (imageUpload) {
+            imageUpload.addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(event) {
+                        updateImagePreview(event.target.result);
+                        document.getElementById('pizzaImageUrl').value = '';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        // Image URL preview
+        var imageUrl = document.getElementById('pizzaImageUrl');
+        if (imageUrl) {
+            imageUrl.addEventListener('input', function(e) {
+                var url = e.target.value.trim();
+                if (url) {
+                    updateImagePreview(url);
+                    document.getElementById('pizzaImageUpload').value = '';
+                }
+            });
+        }
+        
+        // Pairing image upload preview
+        var pairingImageUpload = document.getElementById('pairingImageUpload');
+        if (pairingImageUpload) {
+            pairingImageUpload.addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(event) {
+                        updatePairingImagePreview(event.target.result);
+                        document.getElementById('pizzaPairingImage').value = '';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        // Pairing image URL preview
+        var pairingImageUrl = document.getElementById('pizzaPairingImage');
+        if (pairingImageUrl) {
+            pairingImageUrl.addEventListener('input', function(e) {
+                var url = e.target.value.trim();
+                if (url) {
+                    updatePairingImagePreview(url);
+                    document.getElementById('pairingImageUpload').value = '';
+                }
+            });
+        }
+        
+        // Real-time validation for pizza form
+        var pizzaName = document.getElementById('pizzaName');
+        var pizzaPrice = document.getElementById('pizzaPrice');
+        var pizzaDescription = document.getElementById('pizzaDescription');
+        var pizzaFarm = document.getElementById('pizzaFarm');
+        var nameError = document.getElementById('pizzaNameError');
+        var priceError = document.getElementById('pizzaPriceError');
+        var descError = document.getElementById('pizzaDescriptionError');
+        var farmError = document.getElementById('pizzaFarmError');
+        
+        if (pizzaName) {
+            pizzaName.addEventListener('input', function() {
+                showFieldError(this, nameError, validatePizzaName(this.value));
+                updatePizzaSubmitButton();
+            });
+            pizzaName.addEventListener('blur', function() {
+                showFieldError(this, nameError, validatePizzaName(this.value));
+                updatePizzaSubmitButton();
+            });
+        }
+        
+        if (pizzaPrice) {
+            pizzaPrice.addEventListener('input', function() {
+                showFieldError(this, priceError, validatePizzaPrice(this.value));
+                updatePizzaSubmitButton();
+            });
+            pizzaPrice.addEventListener('blur', function() {
+                showFieldError(this, priceError, validatePizzaPrice(this.value));
+                updatePizzaSubmitButton();
+            });
+        }
+        
+        if (pizzaDescription) {
+            pizzaDescription.addEventListener('input', function() {
+                showFieldError(this, descError, validatePizzaDescription(this.value));
+            });
+        }
+        
+        if (pizzaFarm) {
+            pizzaFarm.addEventListener('input', function() {
+                showFieldError(this, farmError, validatePizzaFarm(this.value));
+            });
+        }
+        
+        // Initialize submit button state
+        setTimeout(function() {
+            updatePizzaSubmitButton();
+        }, 100);
+        
+        // Pizza Form
+        var pizzaForm = document.getElementById('pizzaForm');
+        if (pizzaForm) {
+            pizzaForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                var nameError_msg = validatePizzaName(document.getElementById('pizzaName').value);
+                var priceError_msg = validatePizzaPrice(document.getElementById('pizzaPrice').value);
+                
+                showFieldError(pizzaName, nameError, nameError_msg);
+                showFieldError(pizzaPrice, priceError, priceError_msg);
+                
+                if (nameError_msg || priceError_msg) {
+                    showToast('Please fix the errors before submitting', 'error');
+                    return;
+                }
+                
+                var pizzaId = document.getElementById('pizzaId').value;
+                var imageFile = document.getElementById('pizzaImageUpload').files[0];
+                var imageUrl = document.getElementById('pizzaImageUrl').value.trim();
+                var pairingImageFile = document.getElementById('pairingImageUpload').files[0];
+                var pairingImageUrl = document.getElementById('pizzaPairingImage').value.trim();
+                
+                var formData = new FormData();
+                formData.append('name', document.getElementById('pizzaName').value);
+                formData.append('category', document.getElementById('pizzaCategory').value);
+                formData.append('description', document.getElementById('pizzaDescription').value);
+                formData.append('price', document.getElementById('pizzaPrice').value);
+                formData.append('calories', document.getElementById('pizzaCalories').value || 0);
+                
+                var dietaryValue = document.getElementById('pizzaDietary').value;
+                var dietaryArray = dietaryValue.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+                formData.append('dietary', JSON.stringify(dietaryArray));
+                
+                formData.append('bestseller', document.getElementById('pizzaBestseller').checked);
+                formData.append('seasonal_note', document.getElementById('pizzaSeasonalNote').value);
+                formData.append('farm', document.getElementById('pizzaFarm').value);
+                formData.append('latitude', document.getElementById('pizzaLat').value || 36.348);
+                formData.append('longitude', document.getElementById('pizzaLng').value || 138.597);
+                formData.append('farm_story', document.getElementById('pizzaFarmStory').value);
+                formData.append('recommended_pairing', document.getElementById('pizzaRecommendedPairing').value);
+                formData.append('recommended_pairing_price', document.getElementById('pizzaRecommendedPairingPrice').value || 0);
+                formData.append('recommended_pairing_description', document.getElementById('pizzaPairingDescription').value);
+                formData.append('csrfmiddlewaretoken', csrfToken);
+                
+                if (imageFile) {
+                    formData.append('image_file', imageFile);
+                } else if (imageUrl) {
+                    formData.append('image_url', imageUrl);
+                }
+                
+                if (pairingImageFile) {
+                    formData.append('pairing_image_file', pairingImageFile);
+                } else if (pairingImageUrl) {
+                    formData.append('pairing_image_url', pairingImageUrl);
+                }
+                
+                var url = pizzaId ? '/admin-dashboard/pizza/' + pizzaId + '/update/' : '/admin-dashboard/pizza/create/';
+                var submitBtn = document.getElementById('pizzaSubmitBtn');
+                var originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+                
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: formData
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) {
+                        pizzaModal.hide();
+                        showToast(d.message, 'success');
+                        setTimeout(function() { location.reload(); }, 1000);
+                    } else {
+                        showToast(d.message || 'Error saving pizza', 'error');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                })
+                .catch(function() {
+                    showToast('Network error', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
+            });
+        }
+        
+        // Menu Item Form
+        var menuItemForm = document.getElementById('menuItemForm');
+        if (menuItemForm) {
+            menuItemForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var itemId = document.getElementById('menuItemId').value;
+                var data = {
+                    name: document.getElementById('menuItemName').value,
+                    category: document.getElementById('menuItemCategory').value,
+                    description: document.getElementById('menuItemDescription').value,
+                    price: document.getElementById('menuItemPrice').value,
+                    image: document.getElementById('menuItemImage').value,
+                    is_available: document.getElementById('menuItemAvailable').checked
+                };
+                var url = itemId ? '/admin-dashboard/menu-item/' + itemId + '/update/' : '/admin-dashboard/menu-item/create/';
+                fetch(url, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, 
+                    body: JSON.stringify(data) 
+                })
+                .then(function() { 
+                    menuItemModal.hide(); 
+                    location.reload(); 
+                });
+            });
+        }
+        
+        // Admin Profile Form
+        var adminProfileForm = document.getElementById('adminProfileForm');
+        if (adminProfileForm) {
+            adminProfileForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var currentPassword = document.getElementById('profileCurrentPassword').value;
+                var newPassword = document.getElementById('profileNewPassword').value;
+                var confirmPassword = document.getElementById('profileConfirmPassword').value;
+                var name = document.getElementById('profileNameInput').value;
+                var email = document.getElementById('profileEmailInput').value;
+                var phone = document.getElementById('profilePhoneInput').value;
+                
+                if (!currentPassword) {
+                    showToast('Please enter your current password', 'error');
+                    return;
+                }
+                
+                if (newPassword && newPassword.length < 6) {
+                    showToast('New password must be at least 6 characters', 'error');
+                    return;
+                }
+                
+                if (newPassword !== confirmPassword) {
+                    showToast('Passwords do not match', 'error');
+                    return;
+                }
+                
+                var data = { name: name, email: email, phone: phone, current_password: currentPassword };
+                if (newPassword) data.new_password = newPassword;
+                
+                fetch('/admin-dashboard/profile/update/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify(data)
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) {
+                        adminProfileModal.hide();
+                        showToast('Profile updated successfully!', 'success');
+                        setTimeout(function() { location.reload(); }, 1000);
+                    } else {
+                        showToast(d.message || 'Error updating profile', 'error');
+                    }
+                });
+            });
+        }
+    });
+</script>
+</body>
+</html>

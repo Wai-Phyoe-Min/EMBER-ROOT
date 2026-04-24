@@ -1,0 +1,328 @@
+{% extends 'ember_rootapp/base.html' %}
+{% load static %}
+
+{% block title %}EMBER & ROOT | Wood-Fired Pizza · Nagano, Japan{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="hero-badge">Est. 2019 · Karuizawa, Nagano</span>
+                <h1 class="hero-title">What the soil <em>remembers,</em><br>the fire reveals.</h1>
+                <p class="hero-subtitle">
+                    <span class="pizza-count-dynamic">{{ featured_pizzas.count|default:"0" }}</span> wood-fired pizzas. 
+                    <span class="farm-count-dynamic">0</span> farms. 
+                    One 900-degree oven. From the mountains of Nagano, we source everything within 120 kilometers.
+                </p>
+                <div class="d-flex gap-4 align-items-center mb-4">
+                    <div class="stat-badge"><strong class="farm-count-dynamic">0</strong> Partner Farms</div>
+                    <div class="stat-badge"><strong>120</strong> km Radius</div>
+                    <div class="stat-badge"><strong>900°</strong> Oven Temp</div>
+                </div>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'menu' %}" class="btn btn-ember">VIEW THE MENU</a>
+                    <a href="{% url 'story' %}">
+                        <button class="btn btn-outline-ember">READ THE STORY</button>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image-wrapper">
+                    <img src="{% static 'ember_rootapp/images/home_pizza.jpg' %}" 
+                         alt="Wood-fired pizza emerging from oven">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Pizzas Preview -->
+<section id="menu-preview" class="py-5">
+    <div class="container">
+        <div class="section-header text-center">
+            <div class="section-eyebrow">The Offering</div>
+            <h2 class="section-title">Wood-Fired Pizzas</h2>
+            <p class="section-subtitle mx-auto">From timeless classics to seasonal creations. Every pizza starts with 72-hour fermented dough and ingredients from farms within 120 kilometers.</p>
+        </div>
+        
+        <div class="row g-4" id="featuredPizzas">
+            {% for pizza in featured_pizzas %}
+            <div class="col-md-6 col-lg-4">
+                <div class="pizza-card">
+                    <div class="pizza-image-container" 
+                         data-pizza="{{ pizza.name }}" 
+                         data-farm="{{ pizza.farm }}" 
+                         data-lat="{{ pizza.latitude|default:'36.348' }}" 
+                         data-lng="{{ pizza.longitude|default:'138.597' }}">
+                        {% if pizza.bestseller %}
+                        <span class="bestseller-tag"><i class="bi bi-star-fill me-1"></i>BESTSELLER</span>
+                        {% endif %}
+                        {% if pizza.image %}
+                        <img src="{{ pizza.image }}" alt="{{ pizza.name }} Pizza">
+                        {% else %}
+                        <img src="https://placehold.co/400x400/1E3F20/FFFFFF?text={{ pizza.name|urlencode }}" alt="{{ pizza.name }} Pizza">
+                        {% endif %}
+                        <span class="origin-badge">
+                            <i class="bi bi-pin-map-fill"></i> TRACE TO SOURCE
+                        </span>
+                    </div>
+                    <div class="pizza-content">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h3 class="pizza-title mb-0">{{ pizza.name }}</h3>
+                        </div>
+                        <div class="mb-2">
+                            {% for tag in pizza.get_dietary_tags %}
+                            <span class="dietary-badge">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        <p class="pizza-description">{{ pizza.description|truncatechars:100 }}</p>
+                        <div class="pizza-meta">
+                            <span><i class="bi bi-droplet"></i> {{ pizza.calories }} cal</span>
+                            <span><i class="bi bi-pin"></i> {{ pizza.farm|truncatechars:20 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="pizza-price">¥{{ pizza.price|floatformat:"0" }}</span>
+                            <button class="btn btn-ember add-to-cart-btn" 
+                                    data-name="{{ pizza.name }}" 
+                                    data-price="{{ pizza.price }}"
+                                    data-id="{{ pizza.id }}">
+                                ADD TO ORDER
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted">No pizzas available at the moment. Please check back later!</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="{% url 'menu' %}" class="btn btn-outline-ember">VIEW ALL PIZZAS →</a>
+        </div>
+    </div>
+</section>
+
+<!-- Distance Banner -->
+<section id="distance" class="distance-banner">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center text-md-start">
+                <div class="distance-number">120</div>
+                <div class="text-uppercase small tracking-wide opacity-75">Kilometer Radius</div>
+            </div>
+            <div class="col-md-6">
+                <p class="lead mb-0 text-center" style="color: var(--wheat); font-family: 'Newsreader', serif; font-style: italic;">"Every ingredient in this building grew within the mountains of Nagano. We can prove it."</p>
+            </div>
+            <div class="col-md-3 text-center text-md-end">
+                <a href="{% url 'distance' %}" class="btn btn-outline-light rounded-0">SEE OUR FARMS →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Philosophy Section -->
+<section class="philosophy-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="philosophy-card">
+                    <div class="philosophy-number">01</div>
+                    <h3 class="philosophy-title">Know the Source</h3>
+                    <p class="text-muted">We visit every farm each season. Not for photos—to understand what the mountains are actually growing.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="philosophy-card">
+                    <div class="philosophy-number">02</div>
+                    <h3 class="philosophy-title">Let the Fire Speak</h3>
+                    <p class="text-muted">900 degrees. 90 seconds. We read the flame, not thermometers. The crust tells us when it's ready.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="philosophy-card">
+                    <div class="philosophy-number">03</div>
+                    <h3 class="philosophy-title">Seasonal at Heart</h3>
+                    <p class="text-muted">Our menu evolves with the harvest. What's growing this week determines what's on your plate.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Ensure PIZZAS is loaded immediately for cart pairing
+    (function ensurePizzasLoaded() {
+        // Try cache first for instant availability
+        const cached = localStorage.getItem('emberPizzasCache');
+        if (cached) {
+            try {
+                window.PIZZAS = JSON.parse(cached);
+            } catch(e) {}
+        }
+        
+        // Then fetch fresh data
+        fetch('/api/pizzas/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.pizzas) {
+                    window.PIZZAS = data.pizzas;
+                    localStorage.setItem('emberPizzasCache', JSON.stringify(data.pizzas));
+                    // Update cart UI to show pairings if cart exists
+                    if (typeof window.updateCartUI === 'function') {
+                        setTimeout(() => window.updateCartUI(), 50);
+                    }
+                }
+            })
+            .catch(err => console.log('Could not preload PIZZAS:', err));
+    })();
+
+    // Load PIZZAS data and update counts
+    (function loadPizzasData() {
+        console.log('🔄 Loading PIZZAS for index page...');
+        fetch('/api/pizzas/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.pizzas) {
+                    window.PIZZAS = data.pizzas;
+                    const pizzaCount = data.pizzas.length;
+                    
+                    // Calculate unique farms
+                    const uniqueFarms = new Set(data.pizzas.map(p => p.farm));
+                    const farmCount = uniqueFarms.size;
+                    
+                    console.log('✅ Loaded:', pizzaCount, 'pizzas from', farmCount, 'farms');
+                    
+                    // Update pizza count displays
+                    document.querySelectorAll('.pizza-count-dynamic').forEach(el => {
+                        el.textContent = pizzaCount;
+                    });
+                    
+                    // Update farm count displays
+                    document.querySelectorAll('.farm-count-dynamic').forEach(el => {
+                        el.textContent = farmCount;
+                    });
+                    
+                    // Update stat badge
+                    const statBadge = document.querySelector('.stat-badge strong');
+                    if (statBadge && statBadge.parentElement.textContent.includes('Partner Farms')) {
+                        statBadge.textContent = farmCount;
+                    }
+                    
+                    // Update footer
+                    document.querySelectorAll('.footer-farm-count').forEach(el => {
+                        el.textContent = farmCount;
+                    });
+                    
+                    localStorage.setItem('emberPizzasCache', JSON.stringify(data.pizzas));
+                    
+                    // Update cart UI
+                    if (typeof window.updateCartUI === 'function') {
+                        setTimeout(() => window.updateCartUI(), 50);
+                    }
+                }
+            })
+            .catch(err => {
+                console.log('❌ Could not load pizzas from API, trying cache...');
+                const cached = localStorage.getItem('emberPizzasCache');
+                if (cached) {
+                    try {
+                        const pizzas = JSON.parse(cached);
+                        const pizzaCount = pizzas.length;
+                        const uniqueFarms = new Set(pizzas.map(p => p.farm));
+                        const farmCount = uniqueFarms.size;
+                        
+                        document.querySelectorAll('.pizza-count-dynamic').forEach(el => {
+                            el.textContent = pizzaCount;
+                        });
+                        document.querySelectorAll('.farm-count-dynamic').forEach(el => {
+                            el.textContent = farmCount;
+                        });
+                    } catch(e) {}
+                }
+            });
+    })();
+
+    // Global toast function if not defined in main.js
+    if (typeof window.showToast !== 'function') {
+        window.showToast = function(message, isSuccess = true) {
+            const toast = document.createElement('div');
+            toast.className = 'dashboard-toast';
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '24px';
+            toast.style.right = '24px';
+            toast.style.padding = '0.9rem 1.2rem';
+            toast.style.background = isSuccess ? 'rgba(26, 26, 46, 0.95)' : '#dc3545';
+            toast.style.color = 'white';
+            toast.style.borderRadius = '18px';
+            toast.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.22)';
+            toast.style.zIndex = '9999';
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+            toast.style.transform = 'translateY(12px)';
+            document.body.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            });
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(12px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+    }
+    
+    // Show story modal
+    window.showStoryModal = function() {
+        window.showToast('📖 Kenji-san will be at the oven tonight. Come say hello!');
+    };
+    
+    // Show distance modal
+    window.showDistanceModal = function() {
+        window.showToast('🗺️ All farms within 120km of Karuizawa. Every one has a story.');
+    };
+    
+    // Initialize on DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attach add to cart events
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const name = this.dataset.name;
+                const price = parseFloat(this.dataset.price);
+                
+                if (typeof window.addToCart === 'function') {
+                    window.addToCart(name, price);
+                } else {
+                    window.showToast(`🍕 Added ${name} to cart (¥${price.toLocaleString()})`);
+                }
+            });
+        });
+        
+        // Attach pizza image container click events for origin map
+        document.querySelectorAll('.pizza-image-container').forEach(container => {
+            container.addEventListener('click', function() {
+                const pizza = this.dataset.pizza;
+                const farm = this.dataset.farm;
+                const lat = parseFloat(this.dataset.lat);
+                const lng = parseFloat(this.dataset.lng);
+                
+                if (typeof window.showOriginMap === 'function') {
+                    window.showOriginMap(pizza, farm, lat, lng);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

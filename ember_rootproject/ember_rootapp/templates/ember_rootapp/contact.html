@@ -1,0 +1,1221 @@
+{% extends 'ember_rootapp/base.html' %}
+{% load static %}
+
+{% block title %}Contact | EMBER & ROOT · Karuizawa, Nagano{% endblock %}
+{% block meta_description %}Get in touch with Ember & Root. Visit us in Karuizawa, call us, or send a message. We'd love to hear from you.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Contact Page Specific Styles */
+    .contact-hero {
+        background: linear-gradient(165deg, var(--stone) 0%, #FFFFFF 60%);
+        padding: 4rem 0 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .contact-hero::before {
+        content: '✉️';
+        position: absolute;
+        bottom: -30px;
+        right: -30px;
+        font-size: 200px;
+        opacity: 0.05;
+        pointer-events: none;
+        transform: rotate(-10deg);
+    }
+    
+    .contact-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--japan-indigo);
+        color: white;
+        padding: 0.5rem 1.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 1.5rem;
+        border-radius: 30px;
+    }
+    
+    .contact-title {
+        font-size: 3.5rem;
+        font-weight: 600;
+        color: var(--charcoal);
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+    
+    .contact-subtitle {
+        font-size: 1.2rem;
+        color: var(--ash);
+        max-width: 600px;
+    }
+    
+    /* Contact Cards */
+    .contact-card {
+        background: white;
+        border: 1px solid var(--border-light);
+        padding: 2rem 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+        border-radius: 16px;
+    }
+    
+    .contact-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        border-color: transparent;
+    }
+    
+    .contact-icon {
+        width: 70px;
+        height: 70px;
+        background: var(--stone);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+        transition: all 0.3s ease;
+    }
+    
+    .contact-card:hover .contact-icon {
+        background: var(--ember);
+    }
+    
+    .contact-card:hover .contact-icon i {
+        color: white;
+    }
+    
+    .contact-icon i {
+        font-size: 1.75rem;
+        color: var(--ember);
+        transition: color 0.3s ease;
+    }
+    
+    .contact-card h3 {
+        font-family: 'Newsreader', serif;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+    
+    .contact-detail {
+        color: var(--ash);
+        margin-bottom: 0.5rem;
+    }
+    
+    .contact-detail a {
+        color: var(--ash);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    
+    .contact-detail a:hover {
+        color: var(--ember);
+    }
+    
+    /* Map Section */
+    .map-container {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+    }
+    
+    #contactMap {
+        height: 400px;
+        width: 100%;
+        z-index: 1;
+    }
+    
+    .map-overlay {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background: white;
+        padding: 0.75rem 1.25rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 2;
+        border-left: 3px solid var(--ember);
+        border-radius: 8px;
+        pointer-events: none;
+    }
+    
+    /* Contact Form */
+    .form-container {
+        background: white;
+        border: 1px solid var(--border-light);
+        padding: 2.5rem;
+        border-radius: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    }
+    
+    .form-header {
+        margin-bottom: 2rem;
+    }
+    
+    .form-header i {
+        font-size: 2rem;
+        color: var(--ember);
+        margin-bottom: 1rem;
+    }
+    
+    .form-header h2 {
+        font-family: 'Newsreader', serif;
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-header p {
+        color: var(--ash);
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--ash);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control-custom {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        transition: all 0.25s ease;
+        font-size: 1rem;
+        background: white;
+    }
+    
+    .form-control-custom:focus {
+        outline: none;
+        border-color: var(--ember);
+        box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1);
+    }
+    
+    .form-control-custom.error {
+        border-color: #dc3545;
+    }
+    
+    .error-message {
+        font-size: 0.75rem;
+        color: #dc3545;
+        margin-top: 0.25rem;
+        display: none;
+    }
+    
+    .error-message.show {
+        display: block;
+    }
+    
+    textarea.form-control-custom {
+        resize: vertical;
+        min-height: 150px;
+    }
+    
+    .submit-btn {
+        background: linear-gradient(135deg, var(--ember) 0%, #F39C12 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.9rem;
+        transition: all 0.25s ease;
+        width: 100%;
+        cursor: pointer;
+        border-radius: 12px;
+        box-shadow: 0 10px 20px rgba(211, 84, 0, 0.15);
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(211, 84, 0, 0.2);
+    }
+    
+    .submit-btn.loading {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+    
+    .submit-btn.loading::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        margin-left: 10px;
+        border: 2px solid white;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        display: inline-block;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Success Message */
+    .success-message {
+        background: var(--root);
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+        display: none;
+    }
+    
+    /* Hours Table */
+    .hours-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .hours-table td {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .hours-table td:last-child {
+        text-align: right;
+    }
+    
+    .hours-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .closed {
+        color: var(--ember);
+        font-weight: 500;
+    }
+    
+    /* FAQ Section */
+    .faq-item {
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .faq-item:last-child {
+        border-bottom: none;
+    }
+    
+    .faq-question {
+        padding: 1rem 0;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        color: var(--charcoal);
+        transition: color 0.2s ease;
+    }
+    
+    .faq-question:hover {
+        color: var(--ember);
+    }
+    
+    .faq-question i {
+        transition: transform 0.3s ease;
+        color: var(--ember);
+    }
+    
+    .faq-question.active i {
+        transform: rotate(180deg);
+    }
+    
+    .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+        color: var(--ash);
+        line-height: 1.6;
+        padding: 0;
+    }
+    
+    .faq-answer.show {
+        max-height: 200px;
+        padding-bottom: 1rem;
+    }
+    
+    /* Social Links */
+    .social-links {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+    
+    .social-link {
+        width: 44px;
+        height: 44px;
+        background: white;
+        border: 1px solid var(--border-light);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        color: var(--ash);
+        font-size: 1.2rem;
+        text-decoration: none;
+    }
+    
+    .social-link:hover {
+        background: var(--ember);
+        border-color: var(--ember);
+        color: white;
+        transform: translateY(-3px);
+    }
+
+    /* Form Validation Styles */
+    .form-control-custom.success {
+        border-color: #28a745 !important;
+    }
+
+    .form-control-custom.error {
+        border-color: #dc3545 !important;
+    }
+
+    .error-message {
+        font-size: 0.75rem;
+        color: #dc3545;
+        margin-top: 0.25rem;
+        display: none;
+        animation: slideDown 0.2s ease;
+    }
+
+    .error-message.show {
+        display: block;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .char-counter {
+        font-size: 0.75rem;
+        color: var(--ash);
+        margin-top: 0.25rem;
+        text-align: right;
+        transition: color 0.2s ease;
+    }
+
+    .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .contact-title {
+            font-size: 2.25rem;
+        }
+        .form-container {
+            padding: 1.5rem;
+        }
+        .map-overlay {
+            position: relative;
+            bottom: auto;
+            left: auto;
+            margin-top: 1rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .contact-hero {
+            padding: 3rem 0 2rem;
+        }
+        .contact-title {
+            font-size: 1.8rem;
+        }
+    }
+
+    .faq-answer .text-success {
+        color: #28a745 !important;
+    }
+
+    .faq-answer .text-danger {
+        color: #dc3545 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="contact-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <div class="contact-badge">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span>Get in Touch</span>
+                </div>
+                <h1 class="contact-title">We'd love to hear<br>from you.</h1>
+                <p class="contact-subtitle mx-auto">Whether you have a question about our ingredients, want to book a large party, or just want to say hello—we're listening.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Cards Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <i class="bi bi-telephone-fill"></i>
+                    </div>
+                    <h3>Call Us</h3>
+                    <div class="contact-detail">
+                        <a href="tel:+81267456789">+81 267-45-6789</a>
+                    </div>
+                    <div class="contact-detail small text-muted" id="dynamicCallHours">
+                        Loading hours...
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-light text-dark">Japanese & English OK</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <i class="bi bi-envelope-fill"></i>
+                    </div>
+                    <h3>Email Us</h3>
+                    <div class="contact-detail">
+                        <a href="mailto:hello@emberandroot.jp">hello@emberandroot.jp</a>
+                    </div>
+                    <div class="contact-detail small text-muted">
+                        Responses within 24 hours
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-light text-dark">For general inquiries</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <h3>Visit Us</h3>
+                    <div class="contact-detail">
+                        〒389-0102 長野県北佐久郡軽井沢町
+                    </div>
+                    <div class="contact-detail small text-muted">
+                        5 min walk from Karuizawa Station
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-light text-dark">Pickup only</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Map & Hours Section -->
+<section class="py-4">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="map-container">
+                    <div id="contactMap"></div>
+                    <div class="map-overlay">
+                        <i class="bi bi-pin-map-fill" style="color: var(--ember);"></i>
+                        <strong>Ember & Root</strong><br>
+                        <small class="text-muted">Old soba shop near Kumoba Pond</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-5">
+                <div class="form-container h-100 d-flex flex-column justify-content-center">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-clock-history fs-1" style="color: var(--ember);"></i>
+                        <h2 class="mt-2" style="font-family: 'Newsreader', serif; font-size: 1.6rem;">Hours of Operation</h2>
+                        <p class="text-muted small" id="dynamicSelloutNote">Come early. We sell out most nights.</p>
+                    </div>
+                    
+                    <div id="dynamicHoursContact">
+                        <p class="text-center text-muted py-3">Loading hours...</p>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-light text-center rounded-3">
+                        <i class="bi bi-info-circle-fill text-muted me-2"></i>
+                        <small>Last seating 30 minutes before closing.<br>Dough is limited—we close when it's gone. <span id="typicalClosingNote">We typically sell out by 20:00.</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Form & FAQ Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-6">
+                <div class="form-container">
+                    <div class="form-header">
+                        <i class="bi bi-pencil-square"></i>
+                        <h2>Send us a message</h2>
+                        <p>We'll get back to you as soon as possible.</p>
+                    </div>
+                    
+                    <div id="formSuccessMessage" class="success-message">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <span id="successMessageText">Thank you for your message! We'll respond within 24 hours.</span>
+                    </div>
+                    
+                    <form id="contactForm" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
+                        {% csrf_token %}
+                        
+                        {% if user.is_authenticated %}
+                        <!-- Logged in user - show info banner -->
+                        <div class="alert alert-info mb-4" style="background: #e3f2fd; border: none; border-radius: 12px;">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-person-check-fill" style="color: #1565c0;"></i>
+                                <span>Sending as <strong>{{ user.get_full_name|default:user.email }}</strong></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden fields for logged-in users -->
+                        <input type="hidden" id="contactName" name="name" value="{{ user.get_full_name|default:user.email }}">
+                        <input type="hidden" id="contactEmail" name="email" value="{{ user.email }}">
+                        {% else %}
+                        <!-- Name and Email fields for non-logged-in users -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Your Name</label>
+                                    <input type="text" class="form-control-custom" id="contactName" name="name" required>
+                                    <div class="error-message" id="nameError"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" class="form-control-custom" id="contactEmail" name="email" required>
+                                    <div class="error-message" id="emailError"></div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="form-group">
+                            <label class="form-label">Subject</label>
+                            <select class="form-control-custom" id="contactSubject" name="subject">
+                                <option value="general">General Inquiry</option>
+                                <option value="order">Order Question</option>
+                                <option value="group">Group Booking (10+ people)</option>
+                                <option value="farm">Farm Partnership</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control-custom" id="contactMessage" name="message" required placeholder="Tell us what's on your mind..."></textarea>
+                            <div class="error-message" id="messageError"></div>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <i class="bi bi-send-fill me-2"></i>
+                            SEND MESSAGE
+                        </button>
+                        
+                        <p class="small text-muted text-center mt-3 mb-0">
+                            <i class="bi bi-shield-check"></i> We'll never share your information
+                        </p>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="form-container">
+                    <div class="form-header">
+                        <i class="bi bi-question-circle-fill"></i>
+                        <h2>Frequently Asked Questions</h2>
+                        <p>Quick answers to common questions.</p>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Do you take reservations?
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer" id="dynamicReservationNote">
+                            No, we don't take reservations. We're a small space and believe in first-come, first-served. Come early—we sell out most nights by <span id="closingTimeDynamic">20:00</span>.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Do you offer delivery?
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <span style="color: #D35400; font-weight: 600;">🏪 店頭受取のみ / Pickup Only</span><br>
+                            No, we're pickup only. Our pizzas are best enjoyed fresh from the oven. We're located a 5-minute walk from Karuizawa Station. Orders are ready in approximately 20 minutes.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Do you accept credit cards?
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Yes, we accept all major credit cards (Visa, Mastercard, Amex, JCB), cash, and PayPay.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            What are your hours today?
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer" id="dynamicTodayHoursContact">
+                            Loading hours...
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Can I book a private event?
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Our space is small, but we can accommodate groups up to 20 people on select weekday evenings. Please email us at least two weeks in advance.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Where do you source your ingredients?
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Everything comes from within 120 kilometers of Karuizawa. We partner with <span class="farm-count-dynamic">0</span> family farms across Nagano Prefecture. <a href="{% url 'distance' %}">See our farm map →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Social Section -->
+<section class="py-5" style="background: var(--stone);">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <i class="bi bi-heart-fill fs-1" style="color: var(--ember);"></i>
+                <h2 class="mt-3" style="font-family: 'Newsreader', serif; font-size: 2rem;">Join our community</h2>
+                <p class="text-muted mb-4">Follow us for daily stories from the oven, farm visits, and seasonal menu updates.</p>
+                
+                <div class="social-links">
+                    <a href="https://www.instagram.com/" class="social-link" target="_blank">
+                        <i class="bi bi-instagram"></i>
+                    </a>
+                    <a href="https://www.facebook.com/" class="social-link" target="_blank">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                    <a href="https://twitter.com/" class="social-link" target="_blank">
+                        <i class="bi bi-twitter-x"></i>
+                    </a>
+                    <a href="https://www.tiktok.com/" class="social-link" target="_blank">
+                        <i class="bi bi-tiktok"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Closing time references
+    function updateClosingTimeReferences() {
+        fetch('/api/business-hours/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.hours) {
+                    // Find a typical closing time (use Friday or Saturday as reference)
+                    const typicalDay = data.hours['Friday'] || data.hours['Saturday'];
+                    if (typicalDay && typicalDay.close) {
+                        const closingTime = typicalDay.close;
+                        
+                        // Update closing time span (FAQ)
+                        const closingSpan = document.getElementById('closingTimeDynamic');
+                        if (closingSpan) closingSpan.textContent = closingTime;
+                        
+                        // Update typical closing note (bottom of hours section)
+                        const closingNote = document.getElementById('typicalClosingNote');
+                        if (closingNote) closingNote.textContent = `We typically sell out by ${closingTime}.`;
+                        
+                        // Update the "Come early" note (NEW)
+                        const selloutNote = document.getElementById('dynamicSelloutNote');
+                        if (selloutNote) selloutNote.innerHTML = `Come early. We sell out most nights by ${closingTime}.`;
+                    }
+                }
+            })
+            .catch(err => {
+                console.log('Error loading closing time:', err);
+                // Keep defaults if API fails
+            });
+    }
+
+    // Load today's hours for contact page FAQ
+    function loadTodayHoursContact() {
+        const container = document.getElementById('dynamicTodayHoursContact');
+        if (!container) return;
+        
+        const today = new Date().toLocaleString('en-US', { weekday: 'long' });
+        
+        fetch('/api/business-hours/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.hours && data.hours[today]) {
+                    const h = data.hours[today];
+                    if (h.status === 'closed') {
+                        container.innerHTML = `
+                            <span style="color: #dc3545; font-weight: 600;">❌ ${today}: ${h.note || 'Closed'}</span><br>
+                            <small class="text-muted">We're closed today. ${today === 'Monday' || today === 'Tuesday' || today === 'Wednesday' ? 'We\'re visiting our partner farms!' : 'See you soon!'}</small>
+                        `;
+                    } else {
+                        container.innerHTML = `
+                            <span style="color: #28a745; font-weight: 600;">🟢 ${today}: ${h.open} – ${h.close}</span><br>
+                            <small class="text-muted">Last seating 30 minutes before closing. We close earlier if we run out of dough!</small>
+                        `;
+                    }
+                } else {
+                    container.innerHTML = 'Hours not available. Please call us.';
+                }
+            })
+            .catch(() => {
+                container.innerHTML = 'Please call us for today\'s hours: <a href="tel:+81267456789">+81 267-45-6789</a>';
+            });
+    }
+
+    // Load call hours
+    function loadCallHours() {
+        const el = document.getElementById('dynamicCallHours');
+        if (!el) return;
+        
+        const today = new Date().toLocaleString('en-US', { weekday: 'long' });
+        
+        fetch('/api/business-hours/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.hours && data.hours[today]) {
+                    const h = data.hours[today];
+                    if (h.status === 'closed') {
+                        el.textContent = 'Closed today';
+                        el.style.color = '#dc3545';
+                    } else {
+                        el.textContent = `Today: ${h.open} – ${h.close}`;
+                    }
+                }
+            })
+            .catch(() => {
+                el.textContent = 'Thu-Sun, 16:00-21:00';
+            });
+    }
+
+    // Load dynamic hours for contact page
+    function loadDynamicHours() {
+        const container = document.getElementById('dynamicHoursContact');
+        if (!container) return;
+        
+        fetch('/api/business-hours/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.hours) {
+                    const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                    
+                    let html = '<table class="hours-table">';
+                    dayOrder.forEach(day => {
+                        const h = data.hours[day];
+                        if (h) {
+                            if (h.status === 'closed') {
+                                html += `<tr><td>${day}</td><td class="closed">${h.note || 'Closed'}</td></tr>`;
+                            } else {
+                                html += `<tr><td>${day}</td><td><strong>${h.open} – ${h.close}</strong></td></tr>`;
+                            }
+                        }
+                    });
+                    html += '</table>';
+                    container.innerHTML = html;
+                }
+            })
+            .catch(err => {
+                console.log('Error loading hours:', err);
+                container.innerHTML = '<p class="text-center text-muted">Unable to load hours</p>';
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDynamicHours();
+        loadCallHours();
+        loadTodayHoursContact();
+        updateClosingTimeReferences();
+        // Map
+        const mapContainer = document.getElementById('contactMap');
+        if (mapContainer && typeof L !== 'undefined') {
+            const karuizawaLat = 36.348;
+            const karuizawaLng = 138.597;
+            
+            const map = L.map('contactMap').setView([karuizawaLat, karuizawaLng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            L.marker([karuizawaLat, karuizawaLng]).addTo(map)
+                .bindPopup('<b>Ember & Root</b><br>Old soba shop near Kumoba Pond')
+                .openPopup();
+        }
+        
+        // FAQ Accordion
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const answer = question.nextElementSibling;
+                const icon = question.querySelector('i');
+                
+                document.querySelectorAll('.faq-question').forEach(q => {
+                    if (q !== question) {
+                        q.nextElementSibling.classList.remove('show');
+                        q.classList.remove('active');
+                        q.querySelector('i').style.transform = '';
+                    }
+                });
+                
+                answer.classList.toggle('show');
+                question.classList.toggle('active');
+                icon.style.transform = answer.classList.contains('show') ? 'rotate(180deg)' : '';
+            });
+        });
+        
+        // ==================== REAL-TIME FORM VALIDATION ====================
+        const form = document.getElementById('contactForm');
+        const isLoggedIn = form.dataset.isAuthenticated === 'true';
+        const successMessage = document.getElementById('formSuccessMessage');
+        const successMessageText = document.getElementById('successMessageText');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Get form fields
+        const nameInput = document.getElementById('contactName');
+        const emailInput = document.getElementById('contactEmail');
+        const subjectSelect = document.getElementById('contactSubject');
+        const messageInput = document.getElementById('contactMessage');
+
+        // Get error elements (only if they exist - for guest users)
+        const nameError = document.getElementById('nameError');
+        const emailError = document.getElementById('emailError');
+        const messageError = document.getElementById('messageError');
+
+        // Validation functions
+        function validateName(value) {
+            if (!value || value.length < 2) {
+                return 'Name must be at least 2 characters';
+            }
+            if (value.length > 100) {
+                return 'Name cannot exceed 100 characters';
+            }
+            return '';
+        }
+
+        function validateEmail(value) {
+            if (!value) {
+                return 'Email address is required';
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                return 'Please enter a valid email address';
+            }
+            return '';
+        }
+
+        function validateMessage(value) {
+            if (!value) {
+                return 'Message is required';
+            }
+            if (value.length < 10) {
+                return 'Message must be at least 10 characters';
+            }
+            if (value.length > 2000) {
+                return 'Message cannot exceed 2000 characters';
+            }
+            return '';
+        }
+
+        // Character counter for message
+        const charCounter = document.createElement('div');
+        charCounter.className = 'char-counter';
+        charCounter.style.fontSize = '0.75rem';
+        charCounter.style.color = 'var(--ash)';
+        charCounter.style.marginTop = '0.25rem';
+        charCounter.style.textAlign = 'right';
+        messageInput.parentNode.appendChild(charCounter);
+
+        function updateCharCounter(value) {
+            const length = value.length;
+            charCounter.textContent = length + ' / 2000 characters';
+            if (length > 1800) {
+                charCounter.style.color = '#ff9800';
+            } else if (length > 2000) {
+                charCounter.style.color = '#dc3545';
+            } else {
+                charCounter.style.color = 'var(--ash)';
+            }
+        }
+
+        // Show/hide error functions (only for guest users)
+        function showFieldError(inputEl, errorEl, message) {
+            if (!errorEl) return false;
+            if (message) {
+                errorEl.textContent = message;
+                errorEl.classList.add('show');
+                inputEl.classList.add('error');
+                return false;
+            } else {
+                errorEl.textContent = '';
+                errorEl.classList.remove('show');
+                inputEl.classList.remove('error');
+                return true;
+            }
+        }
+
+        function showFieldSuccess(inputEl) {
+            if (!inputEl) return;
+            inputEl.classList.remove('error');
+            inputEl.classList.add('success');
+        }
+
+        // Real-time validation handlers (only for guest users)
+        if (!isLoggedIn) {
+            nameInput.addEventListener('input', function() {
+                const error = validateName(this.value.trim());
+                showFieldError(this, nameError, error);
+                if (!error && this.value.trim().length >= 2) {
+                    showFieldSuccess(this);
+                }
+                updateSubmitButton();
+            });
+            
+            nameInput.addEventListener('blur', function() {
+                const error = validateName(this.value.trim());
+                showFieldError(this, nameError, error);
+                updateSubmitButton();
+            });
+            
+            emailInput.addEventListener('input', function() {
+                const error = validateEmail(this.value.trim());
+                showFieldError(this, emailError, error);
+                if (!error && this.value.trim()) {
+                    showFieldSuccess(this);
+                }
+                updateSubmitButton();
+            });
+            
+            emailInput.addEventListener('blur', function() {
+                const error = validateEmail(this.value.trim());
+                showFieldError(this, emailError, error);
+                updateSubmitButton();
+            });
+        }
+
+        messageInput.addEventListener('input', function() {
+            const value = this.value;
+            const error = validateMessage(value);
+            if (!isLoggedIn) {
+                showFieldError(this, messageError, error);
+            }
+            updateCharCounter(value);
+            if (!error && value.length >= 10) {
+                showFieldSuccess(this);
+            }
+            updateSubmitButton();
+        });
+
+        messageInput.addEventListener('blur', function() {
+            const error = validateMessage(this.value);
+            if (!isLoggedIn) {
+                showFieldError(this, messageError, error);
+            }
+            updateSubmitButton();
+        });
+
+        // Initialize char counter
+        updateCharCounter(messageInput.value);
+
+        // Check if form is valid and enable/disable submit button
+        function isFormValid() {
+            const nameValid = isLoggedIn ? true : !validateName(nameInput.value.trim());
+            const emailValid = isLoggedIn ? true : !validateEmail(emailInput.value.trim());
+            const messageValid = !validateMessage(messageInput.value);
+            
+            return nameValid && emailValid && messageValid;
+        }
+
+        function updateSubmitButton() {
+            if (isFormValid()) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.6';
+            }
+        }
+
+        // Initial button state
+        updateSubmitButton();
+
+        // Form submission
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Get values (from inputs or hidden fields)
+                const nameValue = nameInput.value.trim();
+                const emailValue = emailInput.value.trim();
+                const messageValue = messageInput.value;
+                
+                // Validation
+                let isValid = true;
+                
+                if (!isLoggedIn) {
+                    const nameError_msg = validateName(nameValue);
+                    const emailError_msg = validateEmail(emailValue);
+                    showFieldError(nameInput, nameError, nameError_msg);
+                    showFieldError(emailInput, emailError, emailError_msg);
+                    if (nameError_msg || emailError_msg) isValid = false;
+                }
+                
+                const messageError_msg = validateMessage(messageValue);
+                if (!isLoggedIn) {
+                    showFieldError(messageInput, messageError, messageError_msg);
+                }
+                if (messageError_msg) isValid = false;
+                
+                if (!isValid) {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Please correct the errors before submitting.', false);
+                    }
+                    return;
+                }
+                
+                // Submit form
+                submitBtn.classList.add('loading');
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>SENDING...';
+                submitBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/ajax/submit-contact/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify({
+                            name: nameValue,
+                            email: emailValue,
+                            subject: subjectSelect.value,
+                            message: messageValue
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        successMessageText.textContent = data.message;
+                        successMessage.style.display = 'block';
+                        form.reset();
+                        
+                        // Reset validation state
+                        if (!isLoggedIn) {
+                            nameInput.classList.remove('success', 'error');
+                            emailInput.classList.remove('success', 'error');
+                        }
+                        messageInput.classList.remove('success', 'error');
+                        updateCharCounter('');
+                        updateSubmitButton();
+                        
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('✨ Thanks! We\'ll get back to you soon.');
+                        }
+                        
+                        setTimeout(() => {
+                            successMessage.style.display = 'none';
+                        }, 5000);
+                    } else {
+                        if (data.errors) {
+                            for (const [field, error] of Object.entries(data.errors)) {
+                                if (field === 'name' && !isLoggedIn) {
+                                    showFieldError(nameInput, nameError, error);
+                                } else if (field === 'email' && !isLoggedIn) {
+                                    showFieldError(emailInput, emailError, error);
+                                } else if (field === 'message') {
+                                    if (!isLoggedIn) {
+                                        showFieldError(messageInput, messageError, error);
+                                    }
+                                }
+                            }
+                        }
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(data.message || 'Please check the form for errors.', false);
+                        }
+                    }
+                } catch (error) {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Network error. Please try again.', false);
+                    }
+                } finally {
+                    submitBtn.classList.remove('loading');
+                    submitBtn.innerHTML = '<i class="bi bi-send-fill me-2"></i>SEND MESSAGE';
+                    updateSubmitButton();
+                }
+            });
+        }
+        
+        // Card animations
+        document.querySelectorAll('.contact-card').forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

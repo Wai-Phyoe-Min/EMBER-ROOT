@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>{% block title %}EMBER & ROOT | Wood-Fired Pizza · Nagano, Japan{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}900°F oven. We source everything within 120km of Karuizawa because distance tastes different.{% endblock %}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <style>
+        /* Back to Top Button - Global */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 48px;
+            height: 48px;
+            background: var(--ember, #D35400);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(211, 84, 0, 0.3);
+            font-size: 1.25rem;
+        }
+        
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .back-to-top:hover {
+            background: var(--ember-dark, #A04000);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(211, 84, 0, 0.4);
+        }
+        
+        .back-to-top:active {
+            transform: translateY(0);
+        }
+
+        /* Checkout Modal Styles */
+        .order-items-container {
+            scrollbar-width: thin;
+            scrollbar-color: var(--ember) #f0f0f0;
+        }
+        
+        .order-items-container::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .order-items-container::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+        
+        .order-items-container::-webkit-scrollbar-thumb {
+            background: var(--ember);
+            border-radius: 10px;
+        }
+        
+        .checkout-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .checkout-item:last-child {
+            border-bottom: none;
+        }
+        
+        .checkout-item-name {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .checkout-item-qty {
+            background: #f0f0f0;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .checkout-item-price {
+            font-weight: 600;
+            color: var(--charcoal);
+        }
+        
+        /* Success Animation */
+        .success-animation {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+        
+        .success-circle {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .success-circle i {
+            font-size: 3.5rem;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .success-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: rgba(40, 167, 69, 0.3);
+            border-radius: 50%;
+            z-index: 1;
+            animation: successPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes successPop {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            80% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes successPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.4;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.4);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.4;
+            }
+        }
+        
+        .pickup-info-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1rem;
+            border-radius: 16px;
+        }
+        
+        #checkoutModal .modal-content {
+            animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .info-card {
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        /* Modern Toast Notifications */
+        .toast-modern {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            min-width: 320px;
+            max-width: 420px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 99999;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border-left: 4px solid var(--ember);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .toast-modern.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-modern.success {
+            border-left-color: #10b981;
+        }
+
+        .toast-modern.error {
+            border-left-color: #ef4444;
+        }
+
+        .toast-modern.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .toast-modern.info {
+            border-left-color: #3b82f6;
+        }
+
+        .toast-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .toast-modern.success .toast-icon {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+        }
+
+        .toast-modern.error .toast-icon {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+        }
+
+        .toast-modern.warning .toast-icon {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: white;
+        }
+
+        .toast-modern.info .toast-icon {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            color: white;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+            color: #1a1a2e;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .toast-message {
+            font-size: 0.85rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .toast-close:hover {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        /* Toast stack animation */
+        .toast-modern + .toast-modern {
+            margin-top: 12px;
+        }
+
+        @media (max-width: 576px) {
+            .toast-modern {
+                min-width: calc(100vw - 32px);
+                max-width: calc(100vw - 32px);
+                right: 16px;
+                bottom: 16px;
+            }
+        }
+
+        /* Dropdown menu - ensure visibility */
+        .user-dropdown {
+            position: relative !important;
+        }
+
+        .user-dropdown .dropdown-toggle {
+            cursor: pointer;
+        }
+
+        .user-dropdown .dropdown-menu {
+            display: none;
+            position: absolute !important;
+            top: calc(100% + 8px) !important;
+            right: 0 !important;
+            left: auto !important;
+            z-index: 9999 !important;
+            min-width: 220px !important;
+            background: white !important;
+            border-radius: 16px !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+            padding: 0.5rem !important;
+            margin: 0 !important;
+            border: none !important;
+        }
+
+        .user-dropdown .dropdown-menu.show {
+            display: block !important;
+        }
+
+        /* Make sure dropdown items are clickable */
+        .user-dropdown .dropdown-item {
+            display: block !important;
+            padding: 0.7rem 1rem !important;
+            color: #1A1A1A !important;
+            text-decoration: none !important;
+            border-radius: 12px !important;
+            transition: background 0.2s ease !important;
+            cursor: pointer !important;
+        }
+
+        .user-dropdown .dropdown-item:hover {
+            background: rgba(211, 84, 0, 0.08) !important;
+            color: #D35400 !important;
+        }
+
+        .user-dropdown .dropdown-item.text-danger {
+            color: #dc3545 !important;
+        }
+
+        .user-dropdown .dropdown-item.text-danger:hover {
+            background: rgba(220, 53, 69, 0.08) !important;
+        }
+
+        .user-dropdown .dropdown-divider {
+            height: 1px !important;
+            margin: 0.5rem 0 !important;
+            background: rgba(0, 0, 0, 0.05) !important;
+        }
+        
+        /* Mobile optimization */
+        @media (max-width: 768px) {
+            .back-to-top {
+                bottom: 1.5rem;
+                right: 1.5rem;
+                width: 44px;
+                height: 44px;
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .back-to-top {
+                bottom: 1rem;
+                right: 1rem;
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Modern Logout Confirmation Modal */
+        .logout-icon-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+
+        .logout-icon-circle {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 15px 35px rgba(26, 26, 46, 0.3);
+            animation: logoutFloat 3s ease-in-out infinite;
+        }
+
+        .logout-icon-circle i {
+            font-size: 2.5rem;
+            color: #E8C07A;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+
+        .logout-icon-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: rgba(26, 26, 46, 0.15);
+            border-radius: 30px;
+            z-index: 1;
+            animation: logoutPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes logoutFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes logoutPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.4;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.3);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.4;
+            }
+        }
+
+        .btn-cancel-logout {
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            color: #666;
+            padding: 0.85rem 2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+        }
+
+        .btn-cancel-logout:hover {
+            background: white;
+            border-color: #ccc;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-cancel-logout:active {
+            transform: translateY(0);
+        }
+
+        .btn-confirm-logout {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%);
+            border: none;
+            color: white;
+            padding: 0.85rem 2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+            box-shadow: 0 8px 20px rgba(26, 26, 46, 0.3);
+        }
+
+        .btn-confirm-logout:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(26, 26, 46, 0.4);
+            background: linear-gradient(135deg, #2d2d4e 0%, #3d3d5e 100%);
+        }
+
+        .btn-confirm-logout:active {
+            transform: translateY(0);
+        }
+
+        .btn-confirm-logout:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #logoutConfirmModal .modal-content {
+            animation: logoutModalZoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes logoutModalZoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 576px) {
+            .logout-icon-wrapper {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .logout-icon-circle {
+                width: 80px;
+                height: 80px;
+                border-radius: 24px;
+            }
+            
+            .logout-icon-circle i {
+                font-size: 2rem;
+            }
+            
+            .logout-icon-pulse {
+                width: 80px;
+                height: 80px;
+                border-radius: 24px;
+            }
+            
+            .btn-cancel-logout,
+            .btn-confirm-logout {
+                padding: 0.7rem 1.5rem;
+                font-size: 0.85rem;
+                min-width: 100px;
+            }
+            
+            #logoutConfirmModal .d-flex.gap-3 {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-cancel-logout,
+            .btn-confirm-logout {
+                width: 100%;
+            }
+        }
+
+        /* 特定商取引法 Modal Animation */
+        #tokushohoModal .modal-content {
+            animation: tokushohoZoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes tokushohoZoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        #tokushohoModal .table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        #tokushohoModal .table tbody tr:hover td {
+            transform: translateX(5px);
+            transition: transform 0.3s ease;
+        }
+
+        #tokushohoModal .table tbody tr td:first-child {
+            transition: all 0.3s ease;
+        }
+
+        #tokushohoModal .table tbody tr:hover td:first-child {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">EMBER <span>&</span> ROOT</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'menu' %}active{% endif %}" href="{% url 'menu' %}">Menu</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'story' %}active{% endif %}" href="{% url 'story' %}">Story</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'distance' %}active{% endif %}" href="{% url 'distance' %}">Distance</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'visit' %}active{% endif %}" href="{% url 'visit' %}">Visit</a></li>
+                </ul>
+                <div class="d-flex gap-3 align-items-center">
+                    <div id="authArea">
+                        {% if user.is_authenticated %}
+                        <div class="dropdown user-dropdown">
+                            <button class="btn dropdown-toggle d-flex align-items-center gap-2 border-0" 
+                                    type="button" 
+                                    id="userDropdown"
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <span class="user-avatar">{{ user.get_avatar_initial }}</span>
+                                <span class="user-name d-none d-md-inline">{{ user.first_name|default:user.email }}</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                {% if user.is_admin_user or user.is_superuser %}
+                                <li><a class="dropdown-item" href="{% url 'admin_dashboard' %}">
+                                    <i class="bi bi-shield-lock me-2"></i>Admin
+                                </a></li>
+                                {% else %}
+                                <li><a class="dropdown-item" href="{% url 'dashboard' %}">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                </a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#" data-action="logout">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        {% else %}
+                        <a href="{% url 'auth' %}" class="btn btn-link text-dark text-decoration-none">
+                            <i class="bi bi-person-circle"></i> SIGN IN
+                        </a>
+                        {% endif %}
+                    </div>
+                    <button class="btn btn-outline-ember position-relative" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+                        ORDER <span class="ms-1" id="cartCounter">(0)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        {% for message in messages %}
+        <div class="toast-custom show mb-2" role="alert">
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    {% block content %}{% endblock %}
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <h5>EMBER & ROOT</h5>
+                    <p class="small">Wood-fired pizza from the mountains of Nagano. <span class="footer-farm-count">0</span> farms. One oven. Distance tastes different.</p>
+                    <div class="d-flex gap-3 mt-3">
+                        <a href="https://www.instagram.com/" target="_blank"><i class="bi bi-instagram"></i></a>
+                        <a href="https://www.facebook.com/" target="_blank"><i class="bi bi-facebook"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h5>Explore</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{% url 'menu' %}">Menu</a></li>
+                        <li class="mb-2"><a href="{% url 'story' %}">Our Story</a></li>
+                        <li class="mb-2"><a href="{% url 'distance' %}">The Distance</a></li>
+                        <li class="mb-2"><a href="{% url 'visit' %}">Visit</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h5>Support</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{% url 'contact' %}">Contact</a></li>
+                        <li class="mb-2"><a href="{% url 'faq' %}">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h5>Legal</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{% url 'privacy' %}">Privacy Policy</a></li>
+                        <li class="mb-2"><a href="{% url 'terms' %}">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h5>特定商取引法</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" data-bs-toggle="modal" data-bs-target="#tokushohoModal" onclick="event.preventDefault();">特定商取引法に基づく表記</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="row">
+                    <div class="col-md-6">
+                        © {% now "Y" %} Ember & Root. 長野県北佐久郡軽井沢町
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <span class="me-3">Created by Wai Phyoe Min. Version 1.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Cart Offcanvas -->
+    <div class="offcanvas offcanvas-end cart-offcanvas" tabindex="-1" id="cartOffcanvas">
+        <div class="offcanvas-header cart-header">
+            <h4 class="offcanvas-title" style="font-family: 'Newsreader', serif;">Your Order</h4>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div id="cartItemsContainer"></div>
+            <div id="pairingBox"></div>
+            <div class="p-4 border-top">
+                <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span id="cartSubtotal">¥0</span></div>
+                <div class="d-flex justify-content-between mb-3"><span class="fw-bold">Total</span><span class="fw-bold" id="cartTotal">¥0</span></div>
+                <button class="btn btn-ember w-100 mb-2" id="checkoutBtn">CHECKOUT</button>
+                <p class="small text-muted text-center mb-0">Pickup only. Karuizawa, Nagano.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Checkout Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 32px; overflow: hidden;">
+                <!-- Modal Header -->
+                <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%); padding: 1.5rem 2rem;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 50px; height: 50px; background: rgba(211,84,0,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-cart-check-fill" style="font-size: 1.5rem; color: #E8C07A;"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title text-white" style="font-size: 1.4rem; font-weight: 700;">Complete Your Order</h5>
+                            <p class="text-white-50 small mb-0">Pickup at Karuizawa · ~20 minutes</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="modal-body p-4">
+                    <!-- Order Summary -->
+                    <div class="order-summary-section mb-4">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: var(--ember);">
+                            <i class="bi bi-receipt me-2"></i>Order Summary
+                        </h6>
+                        <div class="order-items-container" id="checkoutOrderItems" style="max-height: 250px; overflow-y: auto;">
+                            <!-- Items will be populated here -->
+                        </div>
+                        <div class="order-totals mt-3 pt-3 border-top">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Subtotal</span>
+                                <span class="fw-semibold" id="checkoutSubtotal">¥0</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-bold">Total</span>
+                                <span class="fw-bold" id="checkoutTotal" style="color: var(--ember); font-size: 1.3rem;">¥0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pickup Information -->
+                    <div class="pickup-info-section mb-4">
+                        <h6 class="fw-bold text-uppercase small mb-3" style="color: var(--ember);">
+                            <i class="bi bi-pin-map-fill me-2"></i>Pickup Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="info-card p-3 rounded-3" style="background: #fff8e1; border-left: 3px solid #D35400;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div style="font-size: 1.5rem;">🏪</div>
+                                        <div>
+                                            <strong style="color: #D35400;">店頭受取のみ / Pickup Only</strong>
+                                            <p class="mb-0 small text-muted">デリバリーは行っておりません。ご注文後約20分で店頭にてお渡しします。<br><em>No delivery available. Pickup at our Karuizawa location in ~20 minutes.</em></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-card p-3 rounded-3" style="background: #f8f9fa;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div style="width: 40px; height: 40px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="bi bi-clock" style="color: var(--ember);"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Ready in</small>
+                                            <div class="fw-bold">~20 minutes</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-card p-3 rounded-3" style="background: #f8f9fa;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div style="width: 40px; height: 40px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="bi bi-geo-alt" style="color: var(--ember);"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Location</small>
+                                            <div class="fw-bold">Karuizawa, Nagano</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Special Instructions -->
+                    <div class="special-instructions-section mb-4">
+                        <label class="form-label fw-semibold small text-uppercase" style="color: var(--ember);">
+                            <i class="bi bi-chat-text me-2"></i>Special Instructions (Optional)
+                        </label>
+                        <textarea class="form-control rounded-3" id="checkoutInstructions" rows="2" 
+                                placeholder="Any dietary restrictions or special requests?" 
+                                style="resize: vertical; border: 1px solid #e0e0e0;"></textarea>
+                    </div>
+                    
+                    <!-- Order Confirmation Checkbox -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirmPickup" style="cursor: pointer;">
+                        <label class="form-check-label small" for="confirmPickup" style="cursor: pointer;">
+                            I understand this is a pickup-only order from Karuizawa, Nagano.
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius: 50px;">
+                        <i class="bi bi-x-lg me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn px-4 text-white" id="confirmCheckoutBtn" disabled 
+                            style="background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50px; opacity: 0.6;">
+                        <i class="bi bi-check-lg me-2"></i>Confirm Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Success Modal -->
+    <div class="modal fade" id="orderSuccessModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 32px; overflow: hidden;">
+                <div class="modal-body p-0">
+                    <div class="text-center p-5">
+                        <!-- Success Animation -->
+                        <div class="success-animation mb-4">
+                            <div class="success-circle">
+                                <i class="bi bi-check-lg"></i>
+                            </div>
+                            <div class="success-pulse"></div>
+                        </div>
+                        
+                        <h3 class="fw-bold mb-2" style="color: #1a1a2e;">Order Confirmed!</h3>
+                        <p class="text-muted mb-3" id="successOrderNumber">Order #ORD-20250101-1234</p>
+                        
+                        <div class="pickup-info-box mb-4">
+                            <div class="d-flex align-items-center justify-content-center gap-2 text-muted">
+                                <i class="bi bi-clock"></i>
+                                <span>Ready for pickup in <strong>~20 minutes</strong></span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-center gap-2 text-muted mt-2">
+                                <i class="bi bi-geo-alt"></i>
+                                <span>EMBER & ROOT · Karuizawa, Nagano</span>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn px-4 text-white" data-bs-dismiss="modal" 
+                                style="background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50px;">
+                            <i class="bi bi-check-lg me-2"></i>Got it!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutConfirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 32px; overflow: hidden;">
+                <div class="modal-body p-0">
+                    <div class="text-center p-5">
+                        <!-- Animated Icon -->
+                        <div class="logout-icon-wrapper mb-4">
+                            <div class="logout-icon-circle">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </div>
+                            <div class="logout-icon-pulse"></div>
+                        </div>
+                        
+                        <h3 class="fw-bold mb-2" style="color: #1a1a2e;">Ready to Leave?</h3>
+                        <p class="text-muted mb-1">Are you sure you want to sign out?</p>
+                        <p class="text-muted small mb-4">You'll need to sign in again to access your account.</p>
+                        
+                        <div class="d-flex gap-3 justify-content-center">
+                            <button type="button" class="btn-cancel-logout" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg me-2"></i>Stay
+                            </button>
+                            <button type="button" class="btn-confirm-logout" id="confirmLogoutBtn" onclick="confirmLogout()">
+                                <i class="bi bi-box-arrow-right me-2"></i>Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 特定商取引法 Modal -->
+    <div class="modal fade" id="tokushohoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+                <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%); padding: 1.5rem 2rem;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 50px; height: 50px; background: rgba(232,192,122,0.15); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-file-text" style="font-size: 1.5rem; color: #E8C07A;"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title text-white" style="font-size: 1.3rem; font-weight: 700;">特定商取引法に基づく表記</h5>
+                            <p class="text-white-50 small mb-0">Specified Commercial Transactions Act</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="opacity: 0.5;"></button>
+                </div>
+                <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="table-responsive">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td style="width: 30%; padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-building me-2" style="color: #D35400;"></i>販売業者<br><small class="text-muted">Business Operator</small>
+                                    </td>
+                                    <td style="width: 70%; padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;">
+                                        Ember & Root 合同会社
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 0.25rem;"></td><td></td></tr>
+                                <tr>
+                                    <td style="padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-person me-2" style="color: #D35400;"></i>代表責任者<br><small class="text-muted">Representative</small>
+                                    </td>
+                                    <td style="padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;">
+                                        松本 健二 (Kenji Matsumoto)
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 0.25rem;"></td><td></td></tr>
+                                <tr>
+                                    <td style="padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-geo-alt me-2" style="color: #D35400;"></i>所在地<br><small class="text-muted">Location</small>
+                                    </td>
+                                    <td style="padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;">
+                                        〒389-0102 長野県北佐久郡軽井沢町<br>
+                                        <small class="text-muted">Karuizawa, Kitasaku District, Nagano 389-0102</small>
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 0.25rem;"></td><td></td></tr>
+                                <tr>
+                                    <td style="padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-telephone me-2" style="color: #D35400;"></i>電話番号<br><small class="text-muted">Phone</small>
+                                    </td>
+                                    <td style="padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;">
+                                        +81 267-45-6789
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 0.25rem;"></td><td></td></tr>
+                                <tr>
+                                    <td style="padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-envelope me-2" style="color: #D35400;"></i>メールアドレス<br><small class="text-muted">Email</small>
+                                    </td>
+                                    <td style="padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;">
+                                        hello@emberandroot.jp
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 0.25rem;"></td><td></td></tr>
+                                <tr>
+                                    <td style="padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-cash-coin me-2" style="color: #D35400;"></i>販売価格<br><small class="text-muted">Price</small>
+                                    </td>
+                                    <td style="padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;">
+                                        各商品ページに表示（税込価格）<br>
+                                        <small class="text-muted">Displayed on each product page (tax included)</small>
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 0.25rem;"></td><td></td></tr>
+                                <tr>
+                                    <td style="padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-shop me-2" style="color: #D35400;"></i>商品引渡し時期<br><small class="text-muted">Delivery/Pickup Time</small>
+                                    </td>
+                                    <td style="padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;">
+                                        <span style="color: #D35400; font-weight: 600;">🏪 店頭受取のみ（配達なし）</span><br>
+                                        ご注文確認後、約20分で店頭にてお渡し<br>
+                                        <small class="text-muted">Pickup only (no delivery). Ready in ~20 minutes after order confirmation.</small>
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 0.25rem;"></td><td></td></tr>
+                                <tr>
+                                    <td style="padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-credit-card me-2" style="color: #D35400;"></i>お支払い方法<br><small class="text-muted">Payment Methods</small>
+                                    </td>
+                                    <td style="padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;">
+                                        現金、クレジットカード（Visa, Mastercard, JCB）、PayPay<br>
+                                        <small class="text-muted">Cash, Credit Card (Visa, Mastercard, JCB), PayPay</small>
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 0.25rem;"></td><td></td></tr>
+                                <tr>
+                                    <td style="padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-arrow-return-left me-2" style="color: #D35400;"></i>返品・交換<br><small class="text-muted">Returns & Exchanges</small>
+                                    </td>
+                                    <td style="padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;">
+                                        商品到着後7日以内。お客様都合の場合は送料ご負担。食品のため開封後の返品はお受けできません。<br>
+                                        <small class="text-muted">Within 7 days. Customer pays return shipping. No returns on opened food items.</small>
+                                    </td>
+                                </tr>
+                                <tr><td style="padding: 0.25rem;"></td><td></td></tr>
+                                <tr>
+                                    <td style="padding: 1rem; background: #f8f9fa; border-radius: 12px 0 0 12px; font-weight: 600; font-size: 0.85rem; color: #1a1a2e;">
+                                        <i class="bi bi-clock-history me-2" style="color: #D35400;"></i>営業時間<br><small class="text-muted">Business Hours</small>
+                                    </td>
+                                    <td style="padding: 1rem; background: white; border-radius: 0 12px 12px 0; font-size: 0.9rem;" id="tokushohoHours">
+                                        Loading hours...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pickup Only Notice -->
+                    <div class="mt-4 p-4 rounded-3" style="background: linear-gradient(135deg, #fff8e1, #fff3e0); border-left: 4px solid #D35400;">
+                        <div class="d-flex align-items-start gap-3">
+                            <div style="font-size: 2rem;">🏪</div>
+                            <div>
+                                <h6 class="fw-bold mb-1" style="color: #D35400;">店頭受取のみ / Pickup Only</h6>
+                                <p class="mb-0 small text-muted">
+                                    当店は店頭受取のみの営業となり、デリバリー（配達）は行っておりません。ご注文後、約20分で店頭にてお渡しいたします。<br>
+                                    <em>We are a pickup-only establishment. We do not offer delivery services. Orders are ready for pickup in approximately 20 minutes.</em>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex justify-content-center">
+                    <button type="button" class="btn px-5 text-white" data-bs-dismiss="modal" 
+                            style="background: linear-gradient(135deg, #D35400, #E8C07A); border-radius: 50px; font-weight: 600;">
+                        <i class="bi bi-check-lg me-2"></i>閉じる / Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- CSRF Token for AJAX -->
+    <script>
+        const csrfToken = '{{ csrf_token }}';
+    </script>
+    
+    <!-- Custom JS -->
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    <!-- Back to Top Button Script -->
+    <script>
+        (function() {
+            const backToTopBtn = document.getElementById('backToTop');
+            
+            if (backToTopBtn) {
+                // Show/hide button based on scroll position
+                window.addEventListener('scroll', function() {
+                    if (window.scrollY > 300) {
+                        backToTopBtn.classList.add('show');
+                    } else {
+                        backToTopBtn.classList.remove('show');
+                    }
+                });
+                
+                // Smooth scroll to top when clicked
+                backToTopBtn.addEventListener('click', function() {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+                
+                // Trigger initial check
+                if (window.scrollY > 300) {
+                    backToTopBtn.classList.add('show');
+                }
+            }
+        })();
+
+        // Global count updater for pizza and farm counts
+        (function updateGlobalCounts() {
+            // Try cache first
+            const cached = localStorage.getItem('emberPizzasCache');
+            if (cached) {
+                try {
+                    const pizzas = JSON.parse(cached);
+                    const pizzaCount = pizzas.length;
+                    const uniqueFarms = new Set(pizzas.map(p => p.farm));
+                    const farmCount = uniqueFarms.size;
+                    
+                    document.querySelectorAll('.pizza-count-dynamic').forEach(el => {
+                        el.textContent = pizzaCount;
+                    });
+                    document.querySelectorAll('.farm-count-dynamic, .footer-farm-count').forEach(el => {
+                        el.textContent = farmCount;
+                    });
+                } catch(e) {}
+            }
+            
+            // Fetch fresh data
+            fetch('/api/pizzas/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.pizzas) {
+                        const pizzaCount = data.pizzas.length;
+                        const uniqueFarms = new Set(data.pizzas.map(p => p.farm));
+                        const farmCount = uniqueFarms.size;
+                        
+                        document.querySelectorAll('.pizza-count-dynamic').forEach(el => {
+                            el.textContent = pizzaCount;
+                        });
+                        document.querySelectorAll('.farm-count-dynamic, .footer-farm-count').forEach(el => {
+                            el.textContent = farmCount;
+                        });
+                        
+                        localStorage.setItem('emberPizzasCache', JSON.stringify(data.pizzas));
+                    }
+                })
+                .catch(err => console.log('Could not update counts:', err));
+        })();
+
+        // Modern Logout Confirmation
+        function confirmLogout() {
+            const btn = document.getElementById('confirmLogoutBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Signing out...';
+            }
+            
+            // Small delay for animation
+            setTimeout(() => {
+                window.location.href = '/logout/';
+            }, 500);
+        }
+
+        // Show logout modal when logout link is clicked
+        document.addEventListener('DOMContentLoaded', function() {
+            // For the dropdown logout link
+            const logoutLink = document.querySelector('.dropdown-item.text-danger[href*="logout"]');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const logoutModal = new bootstrap.Modal(document.getElementById('logoutConfirmModal'));
+                    logoutModal.show();
+                });
+            }
+        });
+
+        // Handle all logout triggers
+        document.querySelectorAll('[data-action="logout"], .dropdown-item.text-danger[href*="logout"]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const logoutModal = new bootstrap.Modal(document.getElementById('logoutConfirmModal'));
+                logoutModal.show();
+            });
+        });
+
+        // Load dynamic business hours into 特定商取引法 modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const tokushohoLink = document.querySelector('a[data-bs-target="#tokushohoModal"]');
+            if (tokushohoLink) {
+                tokushohoLink.addEventListener('click', function() {
+                    loadTokushohoHours();
+                });
+            }
+        });
+
+        function loadTokushohoHours() {
+            const hoursEl = document.getElementById('tokushohoHours');
+            if (!hoursEl) return;
+            
+            fetch('/api/business-hours/')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.hours) {
+                        const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                        const jaDays = {'Monday': '月', 'Tuesday': '火', 'Wednesday': '水', 'Thursday': '木', 'Friday': '金', 'Saturday': '土', 'Sunday': '日'};
+                        
+                        let html = '';
+                        dayOrder.forEach(day => {
+                            const h = data.hours[day];
+                            if (h) {
+                                if (h.status === 'closed') {
+                                    html += `<div><strong>${day} (${jaDays[day]}):</strong> <span class="text-muted">${h.note || 'Closed / 定休日'}</span></div>`;
+                                } else {
+                                    html += `<div><strong>${day} (${jaDays[day]}):</strong> ${h.open} – ${h.close}${h.note ? ' (' + h.note + ')' : ''}</div>`;
+                                }
+                            }
+                        });
+                        
+                        hoursEl.innerHTML = html || 'Hours not set';
+                    }
+                })
+                .catch(() => {
+                    hoursEl.innerHTML = '木〜土 17:00–21:00 / 日 16:00–20:00 / 月〜水 定休日';
+                });
+        }
+
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,849 @@
+{% extends 'ember_rootapp/base.html' %}
+{% load static %}
+
+{% block title %}The Distance | EMBER & ROOT · 120km Sourcing Philosophy{% endblock %}
+{% block meta_description %}Everything within 120 kilometers. Meet the {{ total_farms|default:"0" }} family farms that grow our ingredients. See the distance that makes the difference.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Distance Page Specific Styles */
+    .distance-hero {
+        background: linear-gradient(135deg, var(--root) 0%, var(--charcoal) 100%);
+        padding: 5rem 0 4rem;
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+    
+    .distance-hero::before {
+        content: '120km';
+        position: absolute;
+        bottom: -30px;
+        right: -30px;
+        font-size: 200px;
+        font-weight: 700;
+        opacity: 0.05;
+        pointer-events: none;
+        font-family: 'Newsreader', serif;
+    }
+    
+    .distance-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 1.5rem;
+        border-radius: 30px;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .distance-title {
+        font-size: 4rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+    
+    .distance-title span {
+        color: var(--wheat);
+    }
+    
+    .distance-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.85;
+        max-width: 700px;
+    }
+    
+    .radius-container {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 2rem 0;
+    }
+    
+    .radius-circle {
+        position: relative;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(232,192,122,0.2) 0%, rgba(232,192,122,0) 70%);
+        border: 2px dashed var(--wheat);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.02); opacity: 0.9; }
+    }
+    
+    .radius-number {
+        font-size: 5rem;
+        font-weight: 700;
+        font-family: 'Newsreader', serif;
+        color: var(--wheat);
+        line-height: 1;
+    }
+    
+    .radius-label {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+    }
+    
+    .center-dot {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: var(--ember);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        text-align: center;
+        margin: 3rem 0;
+    }
+    
+    .stat-card-distance {
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card-distance:hover {
+        transform: translateY(-5px);
+        border-color: var(--wheat);
+        background: rgba(255,255,255,0.08);
+    }
+    
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 700;
+        font-family: 'Newsreader', serif;
+        color: var(--wheat);
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        opacity: 0.7;
+        margin-top: 0.5rem;
+    }
+    
+    .philosophy-text {
+        background: var(--stone);
+        padding: 3rem;
+        margin: 3rem 0;
+        position: relative;
+    }
+    
+    .philosophy-text::before {
+        content: '"';
+        position: absolute;
+        top: -20px;
+        left: 20px;
+        font-size: 5rem;
+        color: var(--ember);
+        opacity: 0.3;
+        font-family: serif;
+    }
+
+    /* Interactive Map Section */
+    .map-section {
+        background: var(--stone);
+        padding: 3rem 0;
+    }
+
+    .map-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .map-header h2 {
+        font-family: 'Newsreader', serif;
+        font-size: 2.2rem;
+        font-weight: 600;
+    }
+
+    .farm-map-wrapper {
+        position: relative;
+        width: 100%;
+        height: 500px;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-light);
+        background: #e8e4df;
+    }
+
+    #farmMap {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 1;
+    }
+
+    .map-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--stone);
+        z-index: 0;
+        color: var(--ash);
+        font-size: 0.9rem;
+    }
+
+    .map-loading i {
+        margin-right: 0.5rem;
+        color: var(--ember);
+    }
+
+    /* Leaflet container fixes */
+    .leaflet-container {
+        background: #e8e4df !important;
+        z-index: 1;
+    }
+
+    .leaflet-control-attribution {
+        font-size: 9px !important;
+        background: rgba(255,255,255,0.8) !important;
+        padding: 2px 5px !important;
+    }
+    
+    .farms-grid {
+        margin-top: 3rem;
+    }
+    
+    .farm-card {
+        background: white;
+        border: 1px solid var(--border-light);
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+    }
+    
+    .farm-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 0;
+        background: var(--ember);
+        transition: height 0.3s ease;
+    }
+    
+    .farm-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        border-color: transparent;
+    }
+    
+    .farm-card:hover::before {
+        height: 100%;
+    }
+    
+    .farm-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--stone);
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .farm-icon i {
+        font-size: 1.5rem;
+        color: var(--ember);
+    }
+    
+    .farm-name {
+        font-family: 'Newsreader', serif;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .farm-location {
+        font-size: 0.8rem;
+        color: var(--ember);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .farm-description {
+        font-size: 0.85rem;
+        color: var(--ash);
+        line-height: 1.5;
+    }
+    
+    .farm-distance {
+        margin-top: 1rem;
+        font-size: 0.7rem;
+        color: var(--wheat);
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .timeline-section {
+        padding: 4rem 0;
+        background: white;
+    }
+    
+    .timeline-item {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .timeline-year {
+        min-width: 100px;
+        font-family: 'Newsreader', serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ember);
+    }
+    
+    .timeline-content {
+        flex: 1;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .timeline-content h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .timeline-content p {
+        color: var(--ash);
+        font-size: 0.9rem;
+    }
+    
+    .commitment-section {
+        background: var(--japan-indigo);
+        color: white;
+        padding: 4rem 0;
+        text-align: center;
+    }
+    
+    .commitment-icon {
+        font-size: 3rem;
+        color: var(--wheat);
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .distance-title {
+            font-size: 2.5rem;
+        }
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        .radius-circle {
+            width: 200px;
+            height: 200px;
+        }
+        .radius-number {
+            font-size: 3rem;
+        }
+        .philosophy-text {
+            padding: 2rem;
+        }
+        .timeline-item {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .timeline-year {
+            min-width: auto;
+        }
+        .farm-map-wrapper {
+            height: 400px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .distance-hero {
+            padding: 3rem 0 2rem;
+        }
+        .distance-title {
+            font-size: 1.8rem;
+        }
+        .farm-card {
+            padding: 1.25rem;
+        }
+        .farm-map-wrapper {
+            height: 350px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="distance-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 text-center">
+                <div class="distance-badge">
+                    <i class="bi bi-pin-map-fill"></i>
+                    <span>The Distance Principle</span>
+                </div>
+                <h1 class="distance-title">Everything within <span>120km</span></h1>
+                <p class="distance-subtitle mx-auto">Not because it's easy. Because it's honest. Every ingredient in this building grew within the mountains of Nagano. We can prove it.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats & Radius Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5 text-center">
+                <div class="radius-container">
+                    <div class="radius-circle">
+                        <div class="radius-number">120</div>
+                        <div class="radius-label">Kilometers</div>
+                        <div class="center-dot"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="stats-grid">
+                    <div class="stat-card-distance">
+                        <div class="stat-number farm-count-dynamic">{{ total_farms|default:"0" }}</div>
+                        <div class="stat-label">Partner Farms</div>
+                    </div>
+                    <div class="stat-card-distance">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Within 120km</div>
+                    </div>
+                    <div class="stat-card-distance">
+                        <div class="stat-number">8</div>
+                        <div class="stat-label">Years of Trust</div>
+                    </div>
+                </div>
+                
+                <div class="philosophy-text">
+                    <p style="font-family: 'Newsreader', serif; font-size: 1.1rem; font-style: italic; margin-bottom: 0;">
+                        "Distance tastes different. When you know the farmer's name, when you've walked the field, when the spinach was in the ground 48 hours ago—that changes everything. We don't import. We don't compromise. We source within 120 kilometers because anything further loses its story."
+                    </p>
+                    <p class="mt-3 mb-0"><strong>— Kenji Matsumoto</strong>, Founder</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Interactive Map Section -->
+<section class="map-section">
+    <div class="container">
+        <div class="map-header">
+            <i class="bi bi-pin-map-fill fs-1" style="color: var(--ember);"></i>
+            <h2>Our Farm Network</h2>
+            <p class="text-muted">Every dot is a family farm. Every farm has a story. Every story ends on your pizza.</p>
+        </div>
+        
+        <div class="farm-map-wrapper">
+            <div id="farmMap"></div>
+            <div class="map-loading" id="mapLoading">
+                <i class="bi bi-map"></i> Loading map...
+            </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <span class="badge bg-light text-dark rounded-0 me-2"><i class="bi bi-circle-fill text-danger me-1" style="font-size: 0.6rem;"></i> Ember & Root</span>
+            <span class="badge bg-light text-dark rounded-0"><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i> Partner Farms</span>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Farms Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-eyebrow">Meet the Growers</div>
+            <h2 class="section-title"><span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> Families. One Mission.</h2>
+            <p class="section-subtitle mx-auto">These are the hands that feed us. We visit every farm each season—not for photos, but to understand what the mountains are actually growing.</p>
+        </div>
+        
+        <div class="row g-4 farms-grid" id="farmsGrid"></div>
+        
+        <div class="text-center mt-4">
+            <button class="btn btn-outline-ember" id="showAllFarmsBtn">VIEW ALL <span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> FARMS →</button>
+        </div>
+    </div>
+</section>
+
+<!-- Timeline: How It Started -->
+<section class="timeline-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-eyebrow">The Journey</div>
+            <h2 class="section-title">Building the Network</h2>
+            <p class="section-subtitle mx-auto">From 2 farms to <span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span>. A commitment that grows deeper every year.</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="timeline-item">
+                    <div class="timeline-year">2019</div>
+                    <div class="timeline-content">
+                        <h4>The First Two</h4>
+                        <p>Ember & Root opens with just two farm partners: Asama Farm (tomatoes & vegetables), and a small mushroom forager in Tateshina. Kenji visits each farm weekly.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-year">2020</div>
+                    <div class="timeline-content">
+                        <h4>Growing Together</h4>
+                        <p>Despite pandemic challenges, the farm network grows to 3 partners. Shinshu Pork Collective joins, providing heritage-breed pork for The Ember pizza.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-year">2022</div>
+                    <div class="timeline-content">
+                        <h4>The 120km Promise</h4>
+                        <p>Kenji formalizes the distance principle: nothing travels more than 120 kilometers. The team begins mapping every ingredient's origin.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-year">2024</div>
+                    <div class="timeline-content">
+                        <h4><span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> Partners</h4>
+                        <p>The network reaches <span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> family farms across Nagano Prefecture. From apple orchards to wheat fields, from mushroom forests to dairy pastures—every ingredient now has a local home.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-year">2025</div>
+                    <div class="timeline-content">
+                        <h4>Beyond Pizza</h4>
+                        <p>Ember & Root launches educational farm visits for local schools. The next generation learns where real food comes from.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Commitment Section -->
+<section class="commitment-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="commitment-icon">
+                    <i class="bi bi-tree-fill"></i>
+                </div>
+                <h2 class="mb-3" style="font-family: 'Newsreader', serif;">Our Commitment</h2>
+                <p class="lead mb-4">We will never source from outside Nagano Prefecture unless the ingredient literally cannot grow here. And even then, we'll ask you first.</p>
+                <div class="row mt-5">
+                    <div class="col-md-4">
+                        <i class="bi bi-check-circle-fill text-warning"></i>
+                        <p class="small mt-2">Every farm visited each season</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="bi bi-check-circle-fill text-warning"></i>
+                        <p class="small mt-2">Fair prices paid to every farmer</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="bi bi-check-circle-fill text-warning"></i>
+                        <p class="small mt-2">Full transparency on every ingredient</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+{{ farms_json|json_script:"farmsData" }}
+
+<script>
+    // Load farm data from Django
+    const farmsDataElement = document.getElementById('farmsData');
+    let rawText = farmsDataElement.textContent;
+    
+    console.log('Raw text type:', typeof rawText);
+    console.log('Raw text starts with:', rawText.substring(0, 50));
+    
+    // Parse the JSON - it might need double parsing if encoded
+    let FARMS = [];
+    try {
+        // First parse
+        let parsed = JSON.parse(rawText);
+        console.log('After first parse type:', typeof parsed);
+        
+        // If it's still a string, parse again
+        if (typeof parsed === 'string') {
+            parsed = JSON.parse(parsed);
+            console.log('After second parse type:', typeof parsed);
+        }
+        
+        // Ensure it's an array
+        if (Array.isArray(parsed)) {
+            FARMS = parsed;
+        } else if (parsed && typeof parsed === 'object') {
+            FARMS = Object.values(parsed);
+        }
+        
+        console.log('✅ Loaded', FARMS.length, 'farms');
+        console.log('📊 First farm name:', FARMS[0]?.name);
+    } catch(e) {
+        console.error('❌ Failed to parse farms data:', e.message);
+        console.error('Raw text (first 100 chars):', rawText.substring(0, 100));
+    }
+    
+    // If still no data, show error
+    if (!FARMS || FARMS.length === 0) {
+        console.error('❌ No farm data available');
+        document.getElementById('farmsGrid').innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">No farm data available. Please try refreshing the page.</p></div>';
+    } else {
+        // Process farm data
+        FARMS.forEach(farm => {
+            if (!farm) return;
+            
+            const pizzaList = (farm.pizzas || []).slice(0, 3).join(', ');
+            const moreCount = (farm.pizzas || []).length > 3 ? ` and ${(farm.pizzas || []).length - 3} more` : '';
+            farm.description = farm.farm_story || `Supplies ingredients for: ${pizzaList}${moreCount}.`;
+            farm.icon = farm.icon || 'bi-tree-fill';
+            
+            if (!farm.location) {
+                farm.location = farm.name && farm.name.includes(',') ? farm.name.split(',')[1].trim() : 'Nagano Prefecture';
+            }
+            if (farm.name && farm.name.includes(',')) {
+                farm.name = farm.name.split(',')[0].trim();
+            }
+            farm.distance = farm.distance || '~45km';
+            farm.pizzas = farm.pizzas || [];
+        });
+        
+        // Render Farm Cards
+        function renderFarms() {
+            const container = document.getElementById('farmsGrid');
+            if (!container) return;
+            
+            const displayFarms = FARMS.slice(0, 3);
+            let html = '';
+            
+            displayFarms.forEach((farm, index) => {
+                if (!farm) return;
+                const pizzaNames = (farm.pizzas || []).slice(0, 2).join(', ');
+                const morePizzas = (farm.pizzas || []).length > 2 ? '...' : '';
+                
+                html += `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="farm-card" style="animation: fadeInUp 0.6s ease ${index * 0.1}s both; opacity: 0; animation-fill-mode: forwards;">
+                            <div class="farm-icon"><i class="${farm.icon || 'bi-tree-fill'}"></i></div>
+                            <h3 class="farm-name">${farm.name || 'Unknown Farm'}</h3>
+                            <div class="farm-location"><i class="bi bi-geo-alt-fill"></i> ${farm.location || 'Nagano Prefecture'}</div>
+                            <p class="farm-description">${farm.description || 'A family farm within 120km of Karuizawa.'}</p>
+                            <div class="farm-distance"><i class="bi bi-pin-map-fill"></i> ${farm.distance || '~45km'} from Karuizawa</div>
+                            <div class="mt-2"><small class="text-muted"><i class="bi bi-pizza"></i> Used in: ${pizzaNames}${morePizzas}</small></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            setTimeout(() => {
+                container.querySelectorAll('.farm-card').forEach(card => card.style.opacity = '1');
+            }, 100);
+        }
+        
+        // Show all farms
+        function initShowAllFarms() {
+            const btn = document.getElementById('showAllFarmsBtn');
+            const container = document.getElementById('farmsGrid');
+            
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    let html = '';
+                    FARMS.forEach((farm, index) => {
+                        if (!farm) return;
+                        const pizzaNames = (farm.pizzas || []).join(', ');
+                        
+                        html += `
+                            <div class="col-md-6 col-lg-4">
+                                <div class="farm-card" style="animation: fadeInUp 0.6s ease ${index * 0.03}s both; opacity: 0; animation-fill-mode: forwards;">
+                                    <div class="farm-icon"><i class="${farm.icon || 'bi-tree-fill'}"></i></div>
+                                    <h3 class="farm-name">${farm.name || 'Unknown Farm'}</h3>
+                                    <div class="farm-location"><i class="bi bi-geo-alt-fill"></i> ${farm.location || 'Nagano Prefecture'}</div>
+                                    <p class="farm-description">${farm.description || 'A family farm within 120km of Karuizawa.'}</p>
+                                    <div class="farm-distance"><i class="bi bi-pin-map-fill"></i> ${farm.distance || '~45km'} from Karuizawa</div>
+                                    <div class="mt-2"><small class="text-muted"><i class="bi bi-pizza"></i> Used in: ${pizzaNames}</small></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    btn.style.display = 'none';
+                    setTimeout(() => {
+                        container.querySelectorAll('.farm-card').forEach(card => card.style.opacity = '1');
+                    }, 100);
+                });
+            }
+        }
+        
+        // Initialize Map
+        let farmMap = null;
+
+        function initFarmMap() {
+            const mapContainer = document.getElementById('farmMap');
+            const mapLoading = document.getElementById('mapLoading');
+            
+            if (!mapContainer) return;
+            
+            if (typeof L === 'undefined') {
+                if (mapLoading) mapLoading.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Map library not loaded.';
+                return;
+            }
+            
+            if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+                setTimeout(initFarmMap, 200);
+                return;
+            }
+            
+            if (farmMap) {
+                farmMap.remove();
+                farmMap = null;
+            }
+            
+            const karuizawaLat = 36.348;
+            const karuizawaLng = 138.597;
+            
+            try {
+                farmMap = L.map('farmMap', {
+                    center: [karuizawaLat, karuizawaLng],
+                    zoom: 9,
+                    zoomControl: true
+                });
+                
+                if (mapLoading) mapLoading.style.display = 'none';
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(farmMap);
+                
+                // Root marker
+                L.marker([karuizawaLat, karuizawaLng], {
+                    icon: L.divIcon({
+                        html: '<div style="background:#D35400;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+                        iconSize: [16, 16]
+                    })
+                }).addTo(farmMap).bindPopup('<b>Ember & Root</b><br>Karuizawa, Nagano').openPopup();
+                
+                // Farm markers
+                let markersAdded = 0;
+                FARMS.forEach(farm => {
+                    if (farm && farm.latitude && farm.longitude) {
+                        L.marker([parseFloat(farm.latitude), parseFloat(farm.longitude)], {
+                            icon: L.divIcon({
+                                html: '<div style="background:#2E7D32;width:12px;height:12px;border-radius:50%;border:2px solid white;"></div>',
+                                iconSize: [12, 12]
+                            })
+                        }).addTo(farmMap)
+                          .bindPopup(`<b>${farm.name}</b><br>${farm.location}<br><small>${farm.distance} from Karuizawa</small>`);
+                        markersAdded++;
+                    }
+                });
+                
+                console.log(`✅ Added ${markersAdded} farm markers to map`);
+                
+                // 120km circle
+                L.circle([karuizawaLat, karuizawaLng], {
+                    radius: 120000,
+                    color: '#E8C07A',
+                    weight: 2,
+                    opacity: 0.5,
+                    fillOpacity: 0.05,
+                    dashArray: '8, 8'
+                }).addTo(farmMap);
+                
+                setTimeout(() => farmMap.invalidateSize(), 500);
+                console.log('✅ Map ready');
+                
+            } catch (error) {
+                console.error('Map error:', error);
+                if (mapLoading) mapLoading.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Map could not load.';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Initializing distance page...');
+            renderFarms();
+            initShowAllFarms();
+            
+            const checkLeaflet = setInterval(() => {
+                if (typeof L !== 'undefined' && document.getElementById('farmMap')) {
+                    clearInterval(checkLeaflet);
+                    setTimeout(initFarmMap, 500);
+                }
+            }, 100);
+            
+            setTimeout(() => {
+                clearInterval(checkLeaflet);
+                if (!farmMap) initFarmMap();
+            }, 3000);
+            
+            window.addEventListener('resize', () => {
+                if (farmMap) farmMap.invalidateSize();
+            });
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,1234 @@
+{% extends 'ember_rootapp/base.html' %}
+{% load static %}
+
+{% block title %}FAQ | EMBER & ROOT · Karuizawa, Nagano{% endblock %}
+{% block meta_description %}Frequently asked questions about Ember & Root's wood-fired pizzas, sourcing philosophy, hours, allergens, and more.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* FAQ Page Specific Styles */
+    .faq-hero {
+        background: linear-gradient(135deg, var(--japan-indigo) 0%, var(--charcoal) 100%);
+        padding: 5rem 0 4rem;
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+    
+    .faq-hero::before {
+        content: '?';
+        position: absolute;
+        bottom: -50px;
+        right: -30px;
+        font-size: 280px;
+        font-weight: 700;
+        opacity: 0.05;
+        pointer-events: none;
+        font-family: 'Newsreader', serif;
+    }
+    
+    .faq-hero::after {
+        content: '?';
+        position: absolute;
+        top: -80px;
+        left: -30px;
+        font-size: 350px;
+        font-weight: 700;
+        opacity: 0.03;
+        pointer-events: none;
+        font-family: 'Newsreader', serif;
+    }
+    
+    .faq-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 1.5rem;
+        border-radius: 30px;
+    }
+    
+    .faq-title {
+        font-size: 3.8rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+    
+    .faq-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.85;
+        max-width: 600px;
+    }
+    
+    .faq-stats {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin-top: 2.5rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .faq-stat {
+        text-align: center;
+    }
+    
+    .faq-stat-number {
+        font-size: 2.2rem;
+        font-weight: 700;
+        font-family: 'Newsreader', serif;
+        color: var(--wheat);
+    }
+    
+    .faq-stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.7;
+    }
+    
+    /* Category Navigation */
+    .category-nav {
+        position: sticky;
+        top: 100px;
+        background: white;
+        border: 1px solid var(--border-light);
+        padding: 1.25rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+    
+    .category-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--ember);
+        display: inline-block;
+    }
+    
+    .category-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .category-list li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .category-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0.75rem;
+        color: var(--ash);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        border-left: 2px solid transparent;
+        border-radius: 8px;
+    }
+    
+    .category-link i {
+        font-size: 1rem;
+        width: 20px;
+        color: var(--ember);
+        opacity: 0.6;
+        transition: opacity 0.2s ease;
+    }
+    
+    .category-link:hover {
+        background: var(--stone);
+        color: var(--ember);
+    }
+    
+    .category-link:hover i {
+        opacity: 1;
+    }
+    
+    .category-link.active {
+        background: var(--stone);
+        border-left-color: var(--ember);
+        color: var(--ember);
+        font-weight: 500;
+    }
+    
+    .category-link.active i {
+        opacity: 1;
+    }
+    
+    /* Search Box */
+    .search-container {
+        margin-bottom: 2rem;
+    }
+    
+    .search-input-group {
+        display: flex;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .search-input-group:focus-within {
+        border-color: var(--ember);
+        box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1);
+    }
+    
+    .search-input {
+        flex: 1;
+        border: none;
+        padding: 1rem 1.25rem;
+        font-size: 1rem;
+        outline: none;
+    }
+    
+    .search-btn {
+        background: var(--ember);
+        border: none;
+        color: white;
+        padding: 0 1.5rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    
+    .search-btn:hover {
+        background: var(--ember-dark);
+    }
+    
+    .search-clear {
+        background: none;
+        border: none;
+        padding: 0 1rem;
+        color: var(--ash);
+        cursor: pointer;
+        display: none;
+    }
+    
+    .search-clear:hover {
+        color: var(--ember);
+    }
+    
+    /* FAQ Categories */
+    .faq-category {
+        margin-bottom: 3rem;
+        scroll-margin-top: 100px;
+    }
+    
+    .category-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border-light);
+    }
+    
+    .category-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--stone);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+    }
+    
+    .category-icon i {
+        font-size: 1.5rem;
+        color: var(--ember);
+    }
+    
+    .category-header h2 {
+        font-family: 'Newsreader', serif;
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--charcoal);
+    }
+    
+    .category-count {
+        font-size: 0.8rem;
+        color: var(--ember);
+        font-weight: 500;
+    }
+    
+    /* FAQ Items */
+    .faq-item {
+        background: white;
+        border: 1px solid var(--border-light);
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        border-radius: 12px;
+    }
+    
+    .faq-item:hover {
+        border-color: transparent;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    }
+    
+    .faq-question {
+        padding: 1.25rem 1.5rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        color: var(--charcoal);
+        transition: all 0.2s ease;
+    }
+    
+    .faq-question:hover {
+        color: var(--ember);
+    }
+    
+    .faq-question-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+    }
+    
+    .faq-question-icon {
+        width: 28px;
+        height: 28px;
+        background: var(--stone);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--ember);
+        transition: all 0.3s ease;
+    }
+    
+    .faq-item.open .faq-question-icon {
+        background: var(--ember);
+        color: white;
+    }
+    
+    .faq-question-text {
+        flex: 1;
+        font-size: 1rem;
+    }
+    
+    .faq-chevron {
+        color: var(--ember);
+        transition: transform 0.3s ease;
+        font-size: 1.2rem;
+    }
+    
+    .faq-item.open .faq-chevron {
+        transform: rotate(180deg);
+    }
+    
+    .faq-answer {
+        padding: 0 1.5rem;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+        color: var(--ash);
+        line-height: 1.7;
+        border-top: 1px solid transparent;
+    }
+    
+    .faq-item.open .faq-answer {
+        padding: 0 1.5rem 1.25rem 1.5rem;
+        max-height: 500px;
+        border-top-color: var(--border-light);
+    }
+    
+    .faq-answer a {
+        color: var(--ember);
+        text-decoration: none;
+    }
+    
+    .faq-answer a:hover {
+        text-decoration: underline;
+    }
+    
+    /* No Results */
+    .no-results {
+        text-align: center;
+        padding: 3rem;
+        background: var(--stone);
+        border-radius: 16px;
+    }
+    
+    .no-results i {
+        font-size: 3rem;
+        color: var(--ash);
+        opacity: 0.5;
+        margin-bottom: 1rem;
+    }
+    
+    /* Contact CTA */
+    .contact-cta {
+        background: var(--stone);
+        padding: 3rem;
+        text-align: center;
+        margin-top: 2rem;
+        border-radius: 16px;
+    }
+    
+    .contact-cta h3 {
+        font-family: 'Newsreader', serif;
+        font-size: 1.6rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-clear {
+        background: none;
+        border: none;
+        padding: 0 1rem;
+        color: var(--ash);
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .search-clear:hover {
+        color: var(--ember);
+    }
+
+    .search-clear i {
+        font-size: 1rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .category-nav {
+            position: static;
+            margin-bottom: 2rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .faq-title {
+            font-size: 2.5rem;
+        }
+        .faq-stats {
+            justify-content: center;
+        }
+        .category-header h2 {
+            font-size: 1.4rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .faq-hero {
+            padding: 3rem 0 2rem;
+        }
+        .faq-title {
+            font-size: 2rem;
+        }
+        .faq-question {
+            padding: 1rem;
+        }
+        .faq-question-text {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="faq-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 text-center">
+                <div class="faq-badge">
+                    <i class="bi bi-question-circle-fill"></i>
+                    <span>Got Questions?</span>
+                </div>
+                <h1 class="faq-title">We have answers.</h1>
+                <p class="faq-subtitle mx-auto">From our sourcing philosophy to pickup hours—everything you need to know about Ember & Root.</p>
+                
+                <div class="faq-stats justify-content-center">
+                    <div class="faq-stat">
+                        <div class="faq-stat-number" id="dynamicFaqCount">24</div>
+                        <div class="faq-stat-label">FAQs</div>
+                    </div>
+                    <div class="faq-stat">
+                        <div class="faq-stat-number" id="dynamicCategoryCount">6</div>
+                        <div class="faq-stat-label">Categories</div>
+                    </div>
+                    <div class="faq-stat">
+                        <div class="faq-stat-number farm-count-dynamic" id="dynamicFarmCount">0</div>
+                        <div class="faq-stat-label">Partner Farms</div>
+                    </div>
+                    <div class="faq-stat">
+                        <div class="faq-stat-number" id="dynamicPizzaCount">12</div>
+                        <div class="faq-stat-label">Pizzas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <div class="category-nav">
+                    <div class="category-title">Categories</div>
+                    <ul class="category-list" id="categoryList">
+                        <li><a href="#general" class="category-link active" data-category="general"><i class="bi bi-info-circle"></i> General</a></li>
+                        <li><a href="#ordering" class="category-link" data-category="ordering"><i class="bi bi-cart"></i> Ordering & Pickup</a></li>
+                        <li><a href="#food" class="category-link" data-category="food"><i class="bi bi-egg-fried"></i> Food & Ingredients</a></li>
+                        <li><a href="#allergens" class="category-link" data-category="allergens"><i class="bi bi-exclamation-triangle"></i> Allergens & Dietary</a></li>
+                        <li><a href="#location" class="category-link" data-category="location"><i class="bi bi-geo-alt"></i> Location & Hours</a></li>
+                        <li><a href="#business" class="category-link" data-category="business"><i class="bi bi-building"></i> Business & Partnerships</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Quick Contact -->
+                <div class="category-nav mt-4">
+                    <div class="category-title">Still have questions?</div>
+                    <div class="text-center mt-3">
+                        <i class="bi bi-chat-dots fs-1" style="color: var(--ember);"></i>
+                        <p class="small text-muted mt-2">We're here to help</p>
+                        <a href="{% url 'contact' %}" class="btn btn-outline-ember btn-sm w-100">Contact Us →</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FAQ Content -->
+            <div class="col-lg-9">
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-input-group">
+                        <input type="text" class="search-input" id="faqSearch" placeholder="Search FAQs...">
+                        <button class="search-btn" id="searchBtn" aria-label="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <button class="search-clear" id="clearSearch" aria-label="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- FAQ Categories -->
+                <div id="faqContent">
+                    <!-- General Category -->
+                    <div id="general" class="faq-category" data-category="general">
+                        <div class="category-header">
+                            <div class="category-icon">
+                                <i class="bi bi-info-circle-fill"></i>
+                            </div>
+                            <div>
+                                <h2>General</h2>
+                                <span class="category-count">5 questions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-list">
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">What is Ember & Root?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer" id="dynamicAboutAnswer">
+                                    Ember & Root is a wood-fired pizza restaurant in Karuizawa, Nagano, Japan. We source all ingredients from farms within 120 kilometers of our location. Every pizza is made with 72-hour fermented dough and cooked in our 900°F oven. We partner with <span id="aboutFarmCount">0</span> family farms across Nagano Prefecture.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Why the name "Ember & Root"?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer" id="dynamicNameAnswer">
+                                    "Ember" represents our wood-fired oven and the fire that transforms simple ingredients into something magical. "Root" represents our connection to the land—the <span id="nameFarmCount">0</span> farms we partner with and the Nagano soil that grows our ingredients. Together, they capture our philosophy: fire reveals what the earth provides.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">When did you open?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer" id="dynamicOpeningAnswer">
+                                    Ember & Root opened in November 2019. Founder Kenji Matsumoto spent six months building our oven by hand—900 bricks and countless burns. We started with just two pizzas and have grown to <span id="openingPizzaCount">12</span>, but our commitment to local sourcing has never wavered.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Do you speak English?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    Yes! Our staff is bilingual in Japanese and English. We welcome international visitors to Karuizawa. Our menu is available in both languages, and we're happy to answer any questions you have.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Is Ember & Root family-friendly?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    Absolutely! We welcome families with children. We have high chairs available and our pizzas are perfect for sharing. Just be mindful that our oven is very hot (900°F) and we ask that children are supervised at all times.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ordering & Pickup Category -->
+                    <div id="ordering" class="faq-category" data-category="ordering">
+                        <div class="category-header">
+                            <div class="category-icon">
+                                <i class="bi bi-cart-fill"></i>
+                            </div>
+                            <div>
+                                <h2>Ordering & Pickup</h2>
+                                <span class="category-count">4 questions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-list">
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Do you take reservations?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer" id="dynamicReservationAnswer">
+                                    No, we don't take reservations. We're a small space and believe in first-come, first-served. Come early—we sell out most nights by <span id="faqClosingTime">20:00</span>. For groups larger than 10 people, please contact us at least two weeks in advance.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Do you offer delivery?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    No, we don't offer delivery. Our pizzas are best enjoyed fresh from the oven—they lose their magic in a delivery bag. We're pickup only from our Karuizawa location, just a 5-minute walk from Karuizawa Station.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">How long does pickup take?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    Please allow 20-30 minutes for order preparation during peak hours. During busy nights (weekends), wait times may be longer.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Can I cancel or modify my order?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    You can cancel or modify your order before we start preparing it. Once we've started making your pizza (usually within 5-10 minutes of ordering), we cannot make changes or issue refunds. Please double-check your order before submitting!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Food & Ingredients Category -->
+                    <div id="food" class="faq-category" data-category="food">
+                        <div class="category-header">
+                            <div class="category-icon">
+                                <i class="bi bi-egg-fried"></i>
+                            </div>
+                            <div>
+                                <h2>Food & Ingredients</h2>
+                                <span class="category-count">5 questions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-list">
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Where do your ingredients come from?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer" id="dynamicIngredientsAnswer">
+                                    Everything comes from within 120 kilometers of Karuizawa. We partner with <span id="ingredientsFarmCount">0</span> family farms across Nagano Prefecture—from Asama Farm's tomatoes to Tateshina Mushroom Forest's wild mushrooms to the Nagano Dairy Collective's cheese. We visit every farm each season. <a href="{% url 'distance' %}">See our farm map →</a>
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">What's special about your dough?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    Our dough is fermented for 72 hours—three full days. This slow fermentation develops complex flavors and creates a crust that's crispy on the outside, chewy on the inside, and easy to digest. We use flour from Nagano wheat and make fresh dough every morning at 5:30 AM.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Why 900°F?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    900°F (480°C) is the traditional Neapolitan pizza temperature. At this heat, our pizzas cook in just 90 seconds. The high heat creates the perfect leopard-spotted crust—charred in spots but still tender. We read the flame, not thermometers. The crust tells us when it's ready.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Do you have seasonal pizzas?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    Yes! Our menu evolves with the harvest. For example, our Harvest Pumpkin pizza is only available October-December when Nagano pumpkins are at their peak. We also have weekly specials based on what farmers tell us is peaking. Follow us on social media for updates!
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">What makes your pizzas different?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    Three things: 1) Our ingredients—all sourced within 120km of Karuizawa. 2) Our dough—72-hour fermentation. 3) Our oven—900°F, hand-built, wood-fired. But honestly? The difference is intention. Every ingredient has a story, every pizza has a purpose. We're not just making pizza; we're celebrating Nagano's farms. We currently offer <span id="menuPizzaCount">12</span> pizzas on our menu.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Allergens & Dietary Category -->
+                    <div id="allergens" class="faq-category" data-category="allergens">
+                        <div class="category-header">
+                            <div class="category-icon">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </div>
+                            <div>
+                                <h2>Allergens & Dietary</h2>
+                                <span class="category-count">4 questions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-list">                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Do you have vegetarian and vegan options?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    Yes! Most of our pizzas are vegetarian—look for the vegetarian badge. For vegans, our Marinara pizza (tomato, garlic, oregano, olive oil) is completely plant-based. We can also modify other pizzas to be vegan upon request (please ask when ordering).
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">What allergens are in your kitchen?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    Our kitchen handles wheat, dairy (milk, cheese), eggs, tree nuts (walnuts), and soy. While we take precautions, cross-contamination is possible. Please inform us of any allergies when ordering so we can do our best to accommodate you.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Can you accommodate other dietary restrictions?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    We'll do our best! Please let us know your dietary needs when ordering. We can modify most pizzas (no cheese, extra vegetables, etc.). However, because we're a small kitchen with a specific menu, we may not be able to accommodate all requests. Contact us in advance for special needs.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Location & Hours Category -->
+                    <div id="location" class="faq-category" data-category="location">
+                        <div class="category-header">
+                            <div class="category-icon">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div>
+                                <h2>Location & Hours</h2>
+                                <span class="category-count">3 questions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-list">
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Where are you located?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    We're in Karuizawa, Nagano Prefecture. Our exact address: 〒389-0102 長野県北佐久郡軽井沢町. We're in an old soba shop near Kumoba Pond, about a 5-minute walk from Karuizawa Station. Look for the smoke!
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">What are your hours?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer" id="dynamicHoursFaq">
+                                    Loading hours...
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Is parking available?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    We have limited parking—only 4 spaces available on a first-come basis. Additional parking is available at the Kumoba Pond lot (¥500, about a 3-minute walk). We strongly recommend walking or taking public transportation, especially on weekends.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Business & Partnerships Category -->
+                    <div id="business" class="faq-category" data-category="business">
+                        <div class="category-header">
+                            <div class="category-icon">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <div>
+                                <h2>Business & Partnerships</h2>
+                                <span class="category-count">3 questions</span>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-list">
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Do you offer catering?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    Currently, we don't offer catering services. Our pizzas are best enjoyed fresh from our oven, and we're a small operation focused on our Karuizawa location. For special events, please contact us—we may be able to accommodate limited private bookings on select evenings.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">How can farms partner with you?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    We're always looking for new farm partners within 120km of Karuizawa! If you're a farmer in Nagano Prefecture growing exceptional ingredients, please email us at <a href="mailto:farms@emberandroot.jp">farms@emberandroot.jp</a>. We visit every potential partner in person—Kenji will come see your farm himself.
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <div class="faq-question-content">
+                                        <span class="faq-question-icon">Q</span>
+                                        <span class="faq-question-text">Are you hiring?</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down faq-chevron"></i>
+                                </div>
+                                <div class="faq-answer">
+                                    We're a small team, but we occasionally hire for kitchen and front-of-house positions. If you're passionate about local food and wood-fired cooking, send your resume to <a href="mailto:jobs@emberandroot.jp">jobs@emberandroot.jp</a>. Japanese language ability is preferred.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact CTA -->
+                <div class="contact-cta">
+                    <i class="bi bi-chat-dots fs-1" style="color: var(--ember);"></i>
+                    <h3>Still have questions?</h3>
+                    <p class="text-muted">We didn't cover something? Reach out to us directly.</p>
+                    <a href="{% url 'contact' %}" class="btn btn-ember mt-2">CONTACT US →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load dynamic stats from API
+    function loadDynamicStats() {
+        fetch('/api/stats/')
+            .then(r => r.json())
+            .then(data => {
+                // Update farm counts everywhere
+                const farmCount = data.farm_count || 0;
+                const farmElements = document.querySelectorAll(
+                    '#dynamicFarmCount, #aboutFarmCount, #ingredientsFarmCount, #nameFarmCount, .farm-count-dynamic'
+                );
+                farmElements.forEach(el => {
+                    if (el) el.textContent = farmCount;
+                });
+                
+                // Update pizza count
+                const pizzaCount = data.pizza_count || 12;
+                const pizzaElements = document.querySelectorAll(
+                    '#dynamicPizzaCount, #menuPizzaCount, #openingPizzaCount'
+                );
+                pizzaElements.forEach(el => {
+                    if (el) el.textContent = pizzaCount;
+                });
+                
+                // Also update the "Why the name" answer text if needed
+                // The farm count in that answer is already handled by #nameFarmCount
+                
+                // Update FAQ count
+                const faqCount = data.faq_count || 24;
+                const faqElement = document.getElementById('dynamicFaqCount');
+                if (faqElement) faqElement.textContent = faqCount;
+                
+                // Update category count
+                const categoryCount = data.category_count || 6;
+                const categoryElement = document.getElementById('dynamicCategoryCount');
+                if (categoryElement) categoryElement.textContent = categoryCount;
+            })
+            .catch(err => {
+                console.log('Error loading stats:', err);
+                // Keep default values if API fails
+            });
+    }
+
+    // Load dynamic hours for FAQ page
+    function loadDynamicHoursFaq() {
+        const container = document.getElementById('dynamicHoursFaq');
+        if (!container) return;
+        
+        fetch('/api/business-hours/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.hours) {
+                    const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                    
+                    let html = '';
+                    dayOrder.forEach(day => {
+                        const h = data.hours[day];
+                        if (h) {
+                            if (h.status === 'closed') {
+                                html += `<strong>${day}:</strong> <span class="text-muted">${h.note || 'Closed'}</span><br>`;
+                            } else {
+                                html += `<strong>${day}:</strong> ${h.open} – ${h.close}<br>`;
+                            }
+                        }
+                    });
+                    
+                    html += '<br><small class="text-muted">Last seating is 30 minutes before closing. We close earlier if we run out of dough—which happens often!</small>';
+                    container.innerHTML = html;
+                }
+            })
+            .catch(err => {
+                console.log('Error loading hours:', err);
+                container.innerHTML = '<strong>Thursday–Saturday:</strong> 17:00–21:00<br><strong>Sunday:</strong> 16:00–20:00<br><strong>Monday–Wednesday:</strong> Closed<br><br><small class="text-muted">Last seating is 30 minutes before closing.</small>';
+            });
+    }
+
+    // Update closing time references in FAQ
+    function updateFaqClosingTime() {
+        fetch('/api/business-hours/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.hours) {
+                    // Use Friday or Saturday as reference
+                    const typicalDay = data.hours['Friday'] || data.hours['Saturday'];
+                    if (typicalDay && typicalDay.close) {
+                        const closingTime = typicalDay.close;
+                        
+                        // Update closing time in reservation answer
+                        const closingSpan = document.getElementById('faqClosingTime');
+                        if (closingSpan) closingSpan.textContent = closingTime;
+                    }
+                }
+            })
+            .catch(err => {
+                console.log('Error loading closing time:', err);
+            });
+    }
+
+    // FAQ Accordion Functionality
+    function initFaqAccordion() {
+        const faqItems = document.querySelectorAll('.faq-item');
+        
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            
+            question.addEventListener('click', () => {
+                // Close other items
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item && otherItem.classList.contains('open')) {
+                        otherItem.classList.remove('open');
+                    }
+                });
+                
+                // Toggle current
+                item.classList.toggle('open');
+                
+                // Smooth scroll to question on mobile
+                if (window.innerWidth < 768 && item.classList.contains('open')) {
+                    setTimeout(() => {
+                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                }
+            });
+        });
+    }
+    
+    // Category Navigation Highlight
+    function initCategoryNav() {
+        const categories = document.querySelectorAll('.faq-category');
+        const navLinks = document.querySelectorAll('.category-link');
+        
+        const observerOptions = {
+            threshold: 0.4,
+            rootMargin: '-80px 0px -100px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+        
+        categories.forEach(category => observer.observe(category));
+        
+        // Smooth scroll for nav links
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href');
+                const target = document.querySelector(targetId);
+                if (target) {
+                    const offset = 80;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.scrollY - offset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    }
+    
+    // Search Functionality
+    function initSearch() {
+        const searchInput = document.getElementById('faqSearch');
+        const searchBtn = document.getElementById('searchBtn');
+        const clearBtn = document.getElementById('clearSearch');
+        const faqItems = document.querySelectorAll('.faq-item');
+        const faqCategories = document.querySelectorAll('.faq-category');
+        
+        if (!searchInput || !searchBtn || !clearBtn) return;
+        
+        function performSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                // Show all items
+                faqItems.forEach(item => {
+                    item.style.display = '';
+                    item.classList.remove('search-hidden');
+                });
+                faqCategories.forEach(category => {
+                    category.style.display = '';
+                });
+                clearBtn.style.display = 'none';
+                
+                // Remove no results message
+                const noResultsMsg = document.querySelector('.no-results');
+                if (noResultsMsg) noResultsMsg.remove();
+                return;
+            }
+            
+            clearBtn.style.display = 'block';
+            let hasResults = false;
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question-text')?.textContent.toLowerCase() || '';
+                const answer = item.querySelector('.faq-answer')?.textContent.toLowerCase() || '';
+                
+                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                    item.style.display = '';
+                    item.classList.remove('search-hidden');
+                    hasResults = true;
+                } else {
+                    item.style.display = 'none';
+                    item.classList.add('search-hidden');
+                }
+            });
+            
+            // Hide empty categories
+            faqCategories.forEach(category => {
+                const visibleItems = category.querySelectorAll('.faq-item:not([style*="display: none"])');
+                if (visibleItems.length === 0) {
+                    category.style.display = 'none';
+                } else {
+                    category.style.display = '';
+                }
+            });
+            
+            // Handle no results message
+            let noResultsMsg = document.querySelector('.no-results');
+            if (!hasResults) {
+                if (!noResultsMsg) {
+                    const container = document.getElementById('faqContent');
+                    const msg = document.createElement('div');
+                    msg.className = 'no-results';
+                    msg.innerHTML = `
+                        <i class="bi bi-emoji-frown"></i>
+                        <h4>No results found</h4>
+                        <p class="text-muted">We couldn't find anything matching "${searchTerm}".<br>Try different keywords or contact us directly.</p>
+                        <a href="/contact/" class="btn btn-outline-ember mt-2">Contact Us</a>
+                    `;
+                    container.appendChild(msg);
+                }
+            } else {
+                if (noResultsMsg) {
+                    noResultsMsg.remove();
+                }
+            }
+        }
+        
+        searchBtn.addEventListener('click', performSearch);
+        
+        searchInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+            // Show/hide clear button based on input
+            clearBtn.style.display = searchInput.value ? 'block' : 'none';
+            // If input is empty, reset the search
+            if (searchInput.value === '') {
+                performSearch();
+            }
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            performSearch();
+            searchInput.focus();
+        });
+        
+        // Initialize clear button state
+        clearBtn.style.display = 'none';
+    }
+    
+    // Animate FAQ items on load
+    function animateFaqItems() {
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach((item, index) => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                item.style.transition = 'all 0.4s ease';
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+            }, index * 30);
+        });
+    }
+    
+    // Initialize everything
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDynamicStats();
+        loadDynamicHoursFaq();
+        updateFaqClosingTime();
+        initFaqAccordion();
+        initCategoryNav();
+        initSearch();
+        animateFaqItems();
+    });
+</script>
+{% endblock %}
