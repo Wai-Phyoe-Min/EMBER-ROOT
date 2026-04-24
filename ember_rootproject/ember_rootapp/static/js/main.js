@@ -440,21 +440,15 @@
         // Try multiple sources
         if (typeof window.PIZZAS !== 'undefined' && Array.isArray(window.PIZZAS) && window.PIZZAS.length > 0) {
             pizzaItem = window.PIZZAS.find(p => p.name === lastItem.name);
-            console.log('Found in window.PIZZAS:', !!pizzaItem);
             if (pizzaItem) {
-                console.log('Pizza data:', {
-                    name: pizzaItem.name,
-                    recommended_pairing: pizzaItem.recommended_pairing,
-                    recommended_pairing_price: pizzaItem.recommended_pairing_price,
-                    recommended_pairing_image: pizzaItem.recommended_pairing_image
-                });
+                console.log('Found in window.PIZZAS');
             }
         }
         
         // Try global PIZZAS (from menu page)
         if (!pizzaItem && typeof PIZZAS !== 'undefined' && Array.isArray(PIZZAS) && PIZZAS.length > 0) {
             pizzaItem = PIZZAS.find(p => p.name === lastItem.name);
-            console.log('Found in PIZZAS:', !!pizzaItem);
+            if (pizzaItem) console.log('Found in PIZZAS');
         }
         
         // Try localStorage cache
@@ -467,7 +461,7 @@
                     pizzaItem = pizzasArray.find(p => p.name === lastItem.name);
                     if (pizzaItem) {
                         window.PIZZAS = pizzasArray;
-                        console.log('Found in cache:', !!pizzaItem);
+                        console.log('Found in cache');
                     }
                 } catch(e) {}
             }
@@ -502,32 +496,30 @@
         
         const pairingName = pizzaItem.recommended_pairing;
         
-        console.log('🍷 Pairing check:', {
-            pairingName: pairingName,
-            isNull: pairingName === null,
-            isUndefined: pairingName === undefined,
-            isEmpty: pairingName === '',
-            hasOr: pairingName ? pairingName.includes(' or ') : false
-        });
-        
         // Check for empty, null, undefined, or containing " or "
         if (!pairingName || pairingName === 'null' || pairingName === 'None' || pairingName.includes(' or ')) {
-            console.log('❌ No valid pairing found for:', lastItem.name, '| pairingName:', pairingName);
+            console.log('❌ No valid pairing found for:', lastItem.name);
             pairingBox.innerHTML = '';
             return;
         }
         
         const pairingPrice = pizzaItem.recommended_pairing_price || 0;
+        
+        // OPTIMIZED: Use a smaller, faster loading image approach
         let pairingImage = pizzaItem.recommended_pairing_image || pizzaItem.image || '';
         
+        // If no image available, use a minimal placeholder (no external placeholder service)
         if (!pairingImage || pairingImage === 'null' || pairingImage === 'None') {
-            pairingImage = `https://placehold.co/400x400/D35400/FFFFFF?text=${encodeURIComponent(pairingName)}`;
+            // Use a data URI or inline SVG for instant loading
+            pairingImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23D35400"/%3E%3Ctext x="50" y="55" text-anchor="middle" fill="white" font-size="40"%3E🍷%3C/text%3E%3C/svg%3E';
         }
+        
+        // Preload the image before rendering (optional)
+        const img = new Image();
+        img.src = pairingImage;
         
         const pairingDescription = pizzaItem.recommended_pairing_description || 
                                 `Pairs beautifully with ${pairingName}.`;
-        
-        console.log('✅ Rendering pairing:', { pairingName, pairingPrice, pairingImage });
         
         const pairingButton = pairingPrice > 0 ? `
             <button class="btn btn-ember btn-sm" onclick="window.addSideToCart('${pairingName.replace(/'/g, "\\'")}', ${pairingPrice})">
@@ -539,25 +531,42 @@
             </button>
         `;
         
+        // Use a simpler card layout with better image loading
         pairingBox.innerHTML = `
             <div class="pairing-card" style="animation: slideIn 0.4s ease;">
-                <div class="pairing-image" style="background-image: url('${pairingImage}'); background-size: cover; background-position: center;"></div>
-                <div class="pairing-content">
-                    <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                <div class="pairing-image-wrapper" style="width: 80px; min-height: 80px; flex-shrink: 0;">
+                    <img src="${pairingImage}" alt="${pairingName}" 
+                        style="width: 100%; height: 80px; object-fit: cover; display: block;"
+                        loading="lazy"
+                        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23D35400\'/%3E%3Ctext x=\'50\' y=\'55\' text-anchor=\'middle\' fill=\'white\' font-size=\'40\'%3E🍷%3C/text%3E%3C/svg%3E'">
+                </div>
+                <div class="pairing-content" style="flex: 1; padding: 0.75rem;">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2 flex-wrap">
                         <div>
                             <div class="text-uppercase small text-muted">Recommended Pairing</div>
-                            <h5 class="mb-2">${pairingName}</h5>
+                            <h6 class="mb-0" style="font-size: 0.9rem;">${escapeHtml(pairingName)}</h6>
                         </div>
-                        ${pairingPrice > 0 ? `<span class="pairing-price">¥${pairingPrice.toLocaleString()}</span>` : ''}
+                        ${pairingPrice > 0 ? `<span class="pairing-price" style="font-weight: 700; color: var(--ember); font-size: 0.9rem;">¥${pairingPrice.toLocaleString()}</span>` : ''}
                     </div>
-                    <p class="pairing-description mb-3">${pairingDescription}</p>
+                    <p class="pairing-description small mb-2" style="color: var(--ash); font-size: 0.75rem;">${escapeHtml(pairingDescription)}</p>
                     <div class="d-flex flex-wrap gap-2 align-items-center">
                         ${pairingButton}
-                        <span class="text-muted small align-self-center">Pairs best with <strong>${lastItem.name}</strong></span>
+                        <span class="text-muted small">Pairs with <strong>${escapeHtml(lastItem.name)}</strong></span>
                     </div>
                 </div>
             </div>
         `;
+    }
+
+    // Add escapeHtml helper if not already present
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // ==================== MAP FUNCTIONS ====================

@@ -455,6 +455,13 @@ def delete_account(request):
 
 def menu(request):
     """Menu page view."""
+    # Try to get cached data
+    cache_key = 'menu_data'
+    cached_data = cache.get(cache_key)
+    
+    if cached_data:
+        return render(request, 'ember_rootapp/menu.html', cached_data)
+    
     # Get available pizzas
     pizzas = Pizza.objects.filter(is_available=True)
     
@@ -521,6 +528,10 @@ def menu(request):
         'sides_json': json.dumps(sides_data),
         'drinks_json': json.dumps(drinks_data),
     }
+    
+    # Cache for 1 hour
+    cache.set(cache_key, context, 3600)
+    
     return render(request, 'ember_rootapp/menu.html', context)
 
 

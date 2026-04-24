@@ -53,6 +53,17 @@
         display: inline-block;
         margin-top: 0.5rem;
     }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 {% endblock %}
 
@@ -71,7 +82,8 @@
             <div class="col-lg-6">
                 <img src="{% static 'ember_rootapp/images/founder.png' %}"
                      alt="Kenji Matsumoto at his wood-fired oven"
-                     class="founder-image">
+                     class="founder-image"
+                     loading="lazy">
             </div>
         </div>
     </div>
@@ -81,22 +93,22 @@
     <div class="container">
         <div class="section-header text-center">
             <div class="section-eyebrow">Our Partners</div>
-            <h2 class="section-title"><span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> Farms, One Promise</h2>
+            <h2 class="section-title"><span id="storyFarmCount" class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> Farms, One Promise</h2>
             <p class="section-subtitle mx-auto">Every ingredient comes from within 120km of Karuizawa</p>
         </div>
         <div class="row g-4" id="farmPartnersGrid">
             <!-- Loading skeleton -->
-            <div class="col-12 text-center py-3">
-                <div class="spinner-border spinner-border-sm text-secondary" role="status">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-secondary" role="status" style="color: var(--ember);">
                     <span class="visually-hidden">Loading farms...</span>
                 </div>
-                <p class="text-muted small mt-2">Loading farm partners...</p>
+                <p class="text-muted mt-3">Loading <span class="farm-count-dynamic">{{ total_farms|default:"our" }}</span> farm partners...</p>
             </div>
         </div>
         
         <div class="text-center mt-4">
             <a href="{% url 'distance' %}" class="btn btn-outline-ember">
-                SEE ALL <span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> FARMS ON MAP →
+                SEE ALL <span id="storyFarmCountBtn" class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> FARMS ON MAP →
             </a>
         </div>
     </div>
@@ -129,7 +141,7 @@
                     </div>
                     <div class="d-flex">
                         <div class="me-4"><strong style="color: var(--ember);">2025</strong></div>
-                        <div><span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> partner farms. Still building everything by hand.</div>
+                        <div><span id="timelineFarmCount" class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> partner farms. Still building everything by hand.</div>
                     </div>
                 </div>
             </div>
@@ -157,12 +169,14 @@
     (function loadFarmPartners() {
         console.log('🔄 Loading farm partners for story page...');
         
-        // Try to get from cache first
+        // Try to get from cache first for immediate display
         const cached = localStorage.getItem('emberPizzasCache');
         if (cached) {
             try {
                 const pizzas = JSON.parse(cached);
-                displayFarmPartners(pizzas);
+                if (pizzas && pizzas.length) {
+                    displayFarmPartners(pizzas);
+                }
             } catch(e) {
                 console.log('Cache parse error:', e);
             }
@@ -172,12 +186,25 @@
         fetch('/api/pizzas/')
             .then(response => response.json())
             .then(data => {
-                if (data.pizzas) {
+                if (data.pizzas && data.pizzas.length) {
                     localStorage.setItem('emberPizzasCache', JSON.stringify(data.pizzas));
                     displayFarmPartners(data.pizzas);
+                } else {
+                    // No pizzas found
+                    const container = document.getElementById('farmPartnersGrid');
+                    if (container) {
+                        container.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">No farm partners available at this time.</p></div>';
+                    }
                 }
             })
-            .catch(err => console.log('Could not load pizzas:', err));
+            .catch(err => {
+                console.log('Could not load pizzas:', err);
+                // Show error message
+                const container = document.getElementById('farmPartnersGrid');
+                if (container && !container.innerHTML.includes('farm-partner-card')) {
+                    container.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Unable to load farm partners. Please refresh the page.</p></div>';
+                }
+            });
     })();
     
     function displayFarmPartners(pizzas) {
@@ -186,12 +213,14 @@
         pizzas.forEach(pizza => {
             if (!pizza.farm) return;
             const farmName = pizza.farm.split(',')[0].trim();
+            const fullFarmName = pizza.farm;
+            
             if (!farmsMap[farmName]) {
                 farmsMap[farmName] = {
                     name: farmName,
-                    fullName: pizza.farm,
+                    fullName: fullFarmName,
                     pizzas: [],
-                    icon: getFarmIcon(pizza.farm),
+                    icon: getFarmIcon(fullFarmName),
                     farmStory: pizza.farm_story || ''
                 };
             }
@@ -206,21 +235,25 @@
         console.log(`✅ Found ${totalFarms} farm partners`);
         
         // Update all farm count displays
-        document.querySelectorAll('.farm-count-dynamic').forEach(el => {
-            el.textContent = totalFarms;
+        document.querySelectorAll('.farm-count-dynamic, #storyFarmCount, #storyFarmCountBtn, #timelineFarmCount').forEach(el => {
+            if (el) el.textContent = totalFarms;
         });
         
-        // Update footer
+        // Update footer (handled by base.html's global script, but just in case)
         document.querySelectorAll('.footer-farm-count').forEach(el => {
-            el.textContent = totalFarms;
+            if (el) el.textContent = totalFarms;
         });
         
-        // Render farm partner cards
+        // Render farm partner cards (show up to 6, or all if less)
         const container = document.getElementById('farmPartnersGrid');
         if (!container) return;
         
-        // Show up to 6 farms (or all if less)
         const displayFarms = farms.slice(0, 6);
+        
+        if (displayFarms.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">No farm partners available at this time.</p></div>';
+            return;
+        }
         
         let html = '';
         displayFarms.forEach((farm, index) => {
@@ -228,13 +261,13 @@
             const morePizzas = farm.pizzas.length > 2 ? ` +${farm.pizzas.length - 2} more` : '';
             
             html += `
-                <div class="col-md-4" style="animation: fadeInUp 0.5s ease ${index * 0.1}s both;">
+                <div class="col-md-6 col-lg-4" style="animation: fadeInUp 0.5s ease ${index * 0.1}s both;">
                     <div class="farm-partner-card text-center">
                         <div class="farm-partner-icon">
                             <i class="${farm.icon}"></i>
                         </div>
-                        <h4 class="mt-3 mb-2">${farm.name}</h4>
-                        <p class="small text-muted mb-2">${pizzaList}${morePizzas}</p>
+                        <h4 class="mt-3 mb-2">${escapeHtml(farm.name)}</h4>
+                        <p class="small text-muted mb-2">${escapeHtml(pizzaList)}${escapeHtml(morePizzas)}</p>
                         <span class="farm-pizza-count">
                             <i class="bi bi-pizza me-1"></i>${farm.pizzas.length} pizza${farm.pizzas.length !== 1 ? 's' : ''}
                         </span>
@@ -242,6 +275,24 @@
                 </div>
             `;
         });
+        
+        // Add view all link if there are more than 6 farms
+        if (farms.length > 6) {
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="farm-partner-card text-center" style="justify-content: center; display: flex; flex-direction: column;">
+                        <div class="farm-partner-icon" style="background: var(--ember);">
+                            <i class="bi bi-plus-lg" style="color: white;"></i>
+                        </div>
+                        <h4 class="mt-3 mb-2">+${farms.length - 6} More</h4>
+                        <p class="small text-muted mb-3">Discover all our farm partners</p>
+                        <a href="{% url 'distance' %}" class="btn btn-outline-ember btn-sm">
+                            EXPLORE ALL FARMS →
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
         
         container.innerHTML = html;
     }
@@ -252,8 +303,20 @@
         if (lower.includes('pork') || lower.includes('meat')) return 'bi-egg-fried';
         if (lower.includes('mushroom') || lower.includes('forest')) return 'bi-flower1';
         if (lower.includes('apple') || lower.includes('orchard')) return 'bi-apple';
-        if (lower.includes('wheat') || lower.includes('mill')) return 'bi-wheat';
+        if (lower.includes('wheat') || lower.includes('mill') || lower.includes('flour')) return 'bi-wheat';
+        if (lower.includes('tomato')) return 'bi-tomato';
+        if (lower.includes('honey')) return 'bi-droplet';
         return 'bi-tree-fill';
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 </script>
 {% endblock %}

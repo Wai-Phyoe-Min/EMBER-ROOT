@@ -136,6 +136,7 @@
         padding: 1.5rem;
         border: 1px solid rgba(255,255,255,0.1);
         transition: all 0.3s ease;
+        border-radius: 16px;
     }
     
     .stat-card-distance:hover {
@@ -164,6 +165,7 @@
         padding: 3rem;
         margin: 3rem 0;
         position: relative;
+        border-radius: 16px;
     }
     
     .philosophy-text::before {
@@ -378,6 +380,21 @@
         margin-bottom: 1rem;
     }
     
+    /* Loading skeleton for farm cards */
+    .skeleton-card {
+        background: #f0f0f0;
+        border-radius: 16px;
+        height: 280px;
+        animation: shimmer 1.5s infinite;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    
     @media (max-width: 768px) {
         .distance-title {
             font-size: 2.5rem;
@@ -458,7 +475,7 @@
             <div class="col-lg-7">
                 <div class="stats-grid">
                     <div class="stat-card-distance">
-                        <div class="stat-number farm-count-dynamic">{{ total_farms|default:"0" }}</div>
+                        <div class="stat-number" id="heroFarmCount">0</div>
                         <div class="stat-label">Partner Farms</div>
                     </div>
                     <div class="stat-card-distance">
@@ -499,8 +516,8 @@
         </div>
         
         <div class="text-center mt-3">
-            <span class="badge bg-light text-dark rounded-0 me-2"><i class="bi bi-circle-fill text-danger me-1" style="font-size: 0.6rem;"></i> Ember & Root</span>
-            <span class="badge bg-light text-dark rounded-0"><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i> Partner Farms</span>
+            <span class="badge bg-light text-dark rounded-pill me-2"><i class="bi bi-circle-fill text-danger me-1" style="font-size: 0.6rem;"></i> Ember & Root</span>
+            <span class="badge bg-light text-dark rounded-pill"><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i> Partner Farms</span>
         </div>
     </div>
 </section>
@@ -510,14 +527,19 @@
     <div class="container">
         <div class="text-center mb-5">
             <div class="section-eyebrow">Meet the Growers</div>
-            <h2 class="section-title"><span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> Families. One Mission.</h2>
+            <h2 class="section-title"><span id="featuredFarmCount">0</span> Families. One Mission.</h2>
             <p class="section-subtitle mx-auto">These are the hands that feed us. We visit every farm each season—not for photos, but to understand what the mountains are actually growing.</p>
         </div>
         
-        <div class="row g-4 farms-grid" id="farmsGrid"></div>
+        <div class="row g-4 farms-grid" id="farmsGrid">
+            <!-- Loading skeletons -->
+            <div class="col-md-6 col-lg-4"><div class="skeleton-card"></div></div>
+            <div class="col-md-6 col-lg-4"><div class="skeleton-card"></div></div>
+            <div class="col-md-6 col-lg-4"><div class="skeleton-card"></div></div>
+        </div>
         
         <div class="text-center mt-4">
-            <button class="btn btn-outline-ember" id="showAllFarmsBtn">VIEW ALL <span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> FARMS →</button>
+            <button class="btn btn-outline-ember" id="showAllFarmsBtn">VIEW ALL <span id="allFarmsCount">0</span> FARMS →</button>
         </div>
     </div>
 </section>
@@ -528,7 +550,7 @@
         <div class="text-center mb-5">
             <div class="section-eyebrow">The Journey</div>
             <h2 class="section-title">Building the Network</h2>
-            <p class="section-subtitle mx-auto">From 2 farms to <span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span>. A commitment that grows deeper every year.</p>
+            <p class="section-subtitle mx-auto">From 2 farms to <span id="timelineFarmCount">0</span>. A commitment that grows deeper every year.</p>
         </div>
         
         <div class="row justify-content-center">
@@ -560,8 +582,8 @@
                 <div class="timeline-item">
                     <div class="timeline-year">2024</div>
                     <div class="timeline-content">
-                        <h4><span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> Partners</h4>
-                        <p>The network reaches <span class="farm-count-dynamic">{{ total_farms|default:"0" }}</span> family farms across Nagano Prefecture. From apple orchards to wheat fields, from mushroom forests to dairy pastures—every ingredient now has a local home.</p>
+                        <h4><span id="timeline2024Count">0</span> Partners</h4>
+                        <p>The network reaches <span id="timeline2024Count2">0</span> family farms across Nagano Prefecture. From apple orchards to wheat fields, from mushroom forests to dairy pastures—every ingredient now has a local home.</p>
                     </div>
                 </div>
                 
@@ -581,7 +603,7 @@
 <section class="commitment-section">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <div class="col-lg-8 text-center">
                 <div class="commitment-icon">
                     <i class="bi bi-tree-fill"></i>
                 </div>
@@ -614,224 +636,240 @@
 <script>
     // Load farm data from Django
     const farmsDataElement = document.getElementById('farmsData');
-    let rawText = farmsDataElement.textContent;
-    
-    console.log('Raw text type:', typeof rawText);
-    console.log('Raw text starts with:', rawText.substring(0, 50));
-    
-    // Parse the JSON - it might need double parsing if encoded
     let FARMS = [];
-    try {
-        // First parse
-        let parsed = JSON.parse(rawText);
-        console.log('After first parse type:', typeof parsed);
-        
-        // If it's still a string, parse again
-        if (typeof parsed === 'string') {
-            parsed = JSON.parse(parsed);
-            console.log('After second parse type:', typeof parsed);
+    
+    function parseFarmsData() {
+        if (!farmsDataElement) {
+            console.error('❌ farmsData element not found');
+            return [];
         }
         
-        // Ensure it's an array
-        if (Array.isArray(parsed)) {
-            FARMS = parsed;
-        } else if (parsed && typeof parsed === 'object') {
-            FARMS = Object.values(parsed);
+        let rawText = farmsDataElement.textContent;
+        console.log('Raw text length:', rawText.length);
+        
+        let parsed = null;
+        try {
+            parsed = JSON.parse(rawText);
+            console.log('First parse type:', typeof parsed);
+            
+            if (typeof parsed === 'string') {
+                parsed = JSON.parse(parsed);
+                console.log('Second parse type:', typeof parsed);
+            }
+            
+            if (Array.isArray(parsed)) {
+                FARMS = parsed;
+            } else if (parsed && typeof parsed === 'object') {
+                FARMS = Object.values(parsed);
+            }
+            
+            console.log('✅ Loaded', FARMS.length, 'farms');
+            if (FARMS[0]) console.log('📊 First farm:', FARMS[0].name);
+        } catch(e) {
+            console.error('❌ Failed to parse farms data:', e.message);
         }
         
-        console.log('✅ Loaded', FARMS.length, 'farms');
-        console.log('📊 First farm name:', FARMS[0]?.name);
-    } catch(e) {
-        console.error('❌ Failed to parse farms data:', e.message);
-        console.error('Raw text (first 100 chars):', rawText.substring(0, 100));
+        return FARMS;
     }
     
-    // If still no data, show error
-    if (!FARMS || FARMS.length === 0) {
-        console.error('❌ No farm data available');
-        document.getElementById('farmsGrid').innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">No farm data available. Please try refreshing the page.</p></div>';
-    } else {
-        // Process farm data
-        FARMS.forEach(farm => {
+    function updateFarmCounts(farmCount) {
+        // Update all farm count displays
+        document.querySelectorAll('#heroFarmCount, #featuredFarmCount, #allFarmsCount, #timelineFarmCount, #timeline2024Count, #timeline2024Count2').forEach(el => {
+            if (el) el.textContent = farmCount;
+        });
+    }
+    
+    function renderFarms(showAll = false) {
+        const container = document.getElementById('farmsGrid');
+        if (!container) return;
+        
+        if (!FARMS || FARMS.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">No farm data available. Please try refreshing the page.</p></div>';
+            return;
+        }
+        
+        const displayFarms = showAll ? FARMS : FARMS.slice(0, 3);
+        let html = '';
+        
+        displayFarms.forEach((farm, index) => {
             if (!farm) return;
+            const pizzaNames = (farm.pizzas || []).slice(0, 2).join(', ');
+            const morePizzas = (farm.pizzas || []).length > 2 ? '...' : '';
+            const pizzaCount = (farm.pizzas || []).length;
             
-            const pizzaList = (farm.pizzas || []).slice(0, 3).join(', ');
-            const moreCount = (farm.pizzas || []).length > 3 ? ` and ${(farm.pizzas || []).length - 3} more` : '';
-            farm.description = farm.farm_story || `Supplies ingredients for: ${pizzaList}${moreCount}.`;
-            farm.icon = farm.icon || 'bi-tree-fill';
-            
-            if (!farm.location) {
-                farm.location = farm.name && farm.name.includes(',') ? farm.name.split(',')[1].trim() : 'Nagano Prefecture';
-            }
-            if (farm.name && farm.name.includes(',')) {
-                farm.name = farm.name.split(',')[0].trim();
-            }
-            farm.distance = farm.distance || '~45km';
-            farm.pizzas = farm.pizzas || [];
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="farm-card" style="animation: fadeInUp 0.6s ease ${(index % 3) * 0.05}s both; opacity: 0; animation-fill-mode: forwards;">
+                        <div class="farm-icon"><i class="${escapeHtml(farm.icon) || 'bi-tree-fill'}"></i></div>
+                        <h3 class="farm-name">${escapeHtml(farm.name || 'Unknown Farm')}</h3>
+                        <div class="farm-location"><i class="bi bi-geo-alt-fill"></i> ${escapeHtml(farm.location || 'Nagano Prefecture')}</div>
+                        <p class="farm-description">${escapeHtml(farm.description || 'A family farm within 120km of Karuizawa.')}</p>
+                        <div class="farm-distance"><i class="bi bi-pin-map-fill"></i> ${escapeHtml(farm.distance || '~45km')} from Karuizawa</div>
+                        ${pizzaCount > 0 ? `<div class="mt-2"><small class="text-muted"><i class="bi bi-pizza"></i> Used in: ${escapeHtml(pizzaNames)}${escapeHtml(morePizzas)}</small></div>` : ''}
+                    </div>
+                </div>
+            `;
         });
         
-        // Render Farm Cards
-        function renderFarms() {
-            const container = document.getElementById('farmsGrid');
-            if (!container) return;
-            
-            const displayFarms = FARMS.slice(0, 3);
-            let html = '';
-            
-            displayFarms.forEach((farm, index) => {
-                if (!farm) return;
-                const pizzaNames = (farm.pizzas || []).slice(0, 2).join(', ');
-                const morePizzas = (farm.pizzas || []).length > 2 ? '...' : '';
-                
-                html += `
-                    <div class="col-md-6 col-lg-4">
-                        <div class="farm-card" style="animation: fadeInUp 0.6s ease ${index * 0.1}s both; opacity: 0; animation-fill-mode: forwards;">
-                            <div class="farm-icon"><i class="${farm.icon || 'bi-tree-fill'}"></i></div>
-                            <h3 class="farm-name">${farm.name || 'Unknown Farm'}</h3>
-                            <div class="farm-location"><i class="bi bi-geo-alt-fill"></i> ${farm.location || 'Nagano Prefecture'}</div>
-                            <p class="farm-description">${farm.description || 'A family farm within 120km of Karuizawa.'}</p>
-                            <div class="farm-distance"><i class="bi bi-pin-map-fill"></i> ${farm.distance || '~45km'} from Karuizawa</div>
-                            <div class="mt-2"><small class="text-muted"><i class="bi bi-pizza"></i> Used in: ${pizzaNames}${morePizzas}</small></div>
-                        </div>
-                    </div>
-                `;
+        container.innerHTML = html;
+        
+        // Add re-animation class
+        setTimeout(() => {
+            document.querySelectorAll('.farm-card').forEach(card => {
+                card.style.opacity = '1';
+            });
+        }, 50);
+    }
+    
+    function initShowAllButton() {
+        const btn = document.getElementById('showAllFarmsBtn');
+        if (!btn) return;
+        
+        btn.addEventListener('click', () => {
+            renderFarms(true);
+            btn.style.display = 'none';
+            if (typeof window.showToast === 'function') {
+                window.showToast(`Showing all ${FARMS.length} partner farms`, 'info', '🌾 All Farms');
+            }
+        });
+    }
+    
+    let farmMap = null;
+    
+    function initFarmMap() {
+        const mapContainer = document.getElementById('farmMap');
+        const mapLoading = document.getElementById('mapLoading');
+        
+        if (!mapContainer) return;
+        
+        if (typeof L === 'undefined') {
+            if (mapLoading) mapLoading.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Map library not loaded.';
+            console.log('⏳ Leaflet not loaded yet, retrying...');
+            setTimeout(initFarmMap, 200);
+            return;
+        }
+        
+        if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+            console.log('⏳ Map container not visible, retrying...');
+            setTimeout(initFarmMap, 200);
+            return;
+        }
+        
+        if (farmMap) {
+            farmMap.remove();
+            farmMap = null;
+        }
+        
+        const karuizawaLat = 36.348;
+        const karuizawaLng = 138.597;
+        
+        try {
+            farmMap = L.map('farmMap', {
+                center: [karuizawaLat, karuizawaLng],
+                zoom: 9,
+                zoomControl: true
             });
             
-            container.innerHTML = html;
-            setTimeout(() => {
-                container.querySelectorAll('.farm-card').forEach(card => card.style.opacity = '1');
-            }, 100);
-        }
-        
-        // Show all farms
-        function initShowAllFarms() {
-            const btn = document.getElementById('showAllFarmsBtn');
-            const container = document.getElementById('farmsGrid');
+            if (mapLoading) mapLoading.style.display = 'none';
             
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    let html = '';
-                    FARMS.forEach((farm, index) => {
-                        if (!farm) return;
-                        const pizzaNames = (farm.pizzas || []).join(', ');
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(farmMap);
+            
+            // Root marker
+            const rootIcon = L.divIcon({
+                html: '<div style="background:#D35400;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+                iconSize: [16, 16],
+                className: 'root-marker'
+            });
+            
+            L.marker([karuizawaLat, karuizawaLng], { icon: rootIcon })
+                .addTo(farmMap)
+                .bindPopup('<b>EMBER & ROOT</b><br>Karuizawa, Nagano')
+                .openPopup();
+            
+            // Farm markers
+            let markersAdded = 0;
+            FARMS.forEach(farm => {
+                if (farm && farm.latitude && farm.longitude) {
+                    const lat = parseFloat(farm.latitude);
+                    const lng = parseFloat(farm.longitude);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const farmIcon = L.divIcon({
+                            html: '<div style="background:#2E7D32;width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>',
+                            iconSize: [12, 12],
+                            className: 'farm-marker'
+                        });
                         
-                        html += `
-                            <div class="col-md-6 col-lg-4">
-                                <div class="farm-card" style="animation: fadeInUp 0.6s ease ${index * 0.03}s both; opacity: 0; animation-fill-mode: forwards;">
-                                    <div class="farm-icon"><i class="${farm.icon || 'bi-tree-fill'}"></i></div>
-                                    <h3 class="farm-name">${farm.name || 'Unknown Farm'}</h3>
-                                    <div class="farm-location"><i class="bi bi-geo-alt-fill"></i> ${farm.location || 'Nagano Prefecture'}</div>
-                                    <p class="farm-description">${farm.description || 'A family farm within 120km of Karuizawa.'}</p>
-                                    <div class="farm-distance"><i class="bi bi-pin-map-fill"></i> ${farm.distance || '~45km'} from Karuizawa</div>
-                                    <div class="mt-2"><small class="text-muted"><i class="bi bi-pizza"></i> Used in: ${pizzaNames}</small></div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                    btn.style.display = 'none';
-                    setTimeout(() => {
-                        container.querySelectorAll('.farm-card').forEach(card => card.style.opacity = '1');
-                    }, 100);
-                });
-            }
-        }
-        
-        // Initialize Map
-        let farmMap = null;
-
-        function initFarmMap() {
-            const mapContainer = document.getElementById('farmMap');
-            const mapLoading = document.getElementById('mapLoading');
-            
-            if (!mapContainer) return;
-            
-            if (typeof L === 'undefined') {
-                if (mapLoading) mapLoading.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Map library not loaded.';
-                return;
-            }
-            
-            if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
-                setTimeout(initFarmMap, 200);
-                return;
-            }
-            
-            if (farmMap) {
-                farmMap.remove();
-                farmMap = null;
-            }
-            
-            const karuizawaLat = 36.348;
-            const karuizawaLng = 138.597;
-            
-            try {
-                farmMap = L.map('farmMap', {
-                    center: [karuizawaLat, karuizawaLng],
-                    zoom: 9,
-                    zoomControl: true
-                });
-                
-                if (mapLoading) mapLoading.style.display = 'none';
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors',
-                    maxZoom: 19
-                }).addTo(farmMap);
-                
-                // Root marker
-                L.marker([karuizawaLat, karuizawaLng], {
-                    icon: L.divIcon({
-                        html: '<div style="background:#D35400;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
-                        iconSize: [16, 16]
-                    })
-                }).addTo(farmMap).bindPopup('<b>Ember & Root</b><br>Karuizawa, Nagano').openPopup();
-                
-                // Farm markers
-                let markersAdded = 0;
-                FARMS.forEach(farm => {
-                    if (farm && farm.latitude && farm.longitude) {
-                        L.marker([parseFloat(farm.latitude), parseFloat(farm.longitude)], {
-                            icon: L.divIcon({
-                                html: '<div style="background:#2E7D32;width:12px;height:12px;border-radius:50%;border:2px solid white;"></div>',
-                                iconSize: [12, 12]
-                            })
-                        }).addTo(farmMap)
-                          .bindPopup(`<b>${farm.name}</b><br>${farm.location}<br><small>${farm.distance} from Karuizawa</small>`);
+                        L.marker([lat, lng], { icon: farmIcon })
+                            .addTo(farmMap)
+                            .bindPopup(`
+                                <b>${escapeHtml(farm.name || 'Farm')}</b><br>
+                                ${escapeHtml(farm.location || 'Nagano')}<br>
+                                <small>📍 ${escapeHtml(farm.distance || '~45km')} from Karuizawa</small>
+                            `);
                         markersAdded++;
                     }
-                });
-                
-                console.log(`✅ Added ${markersAdded} farm markers to map`);
-                
-                // 120km circle
-                L.circle([karuizawaLat, karuizawaLng], {
-                    radius: 120000,
-                    color: '#E8C07A',
-                    weight: 2,
-                    opacity: 0.5,
-                    fillOpacity: 0.05,
-                    dashArray: '8, 8'
-                }).addTo(farmMap);
-                
-                setTimeout(() => farmMap.invalidateSize(), 500);
-                console.log('✅ Map ready');
-                
-            } catch (error) {
-                console.error('Map error:', error);
-                if (mapLoading) mapLoading.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Map could not load.';
-            }
-        }
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Initializing distance page...');
-            renderFarms();
-            initShowAllFarms();
+                }
+            });
             
+            console.log(`✅ Added ${markersAdded} farm markers to map`);
+            
+            // 120km radius circle
+            L.circle([karuizawaLat, karuizawaLng], {
+                radius: 120000,
+                color: '#E8C07A',
+                weight: 2,
+                opacity: 0.5,
+                fillOpacity: 0.05,
+                dashArray: '8, 8'
+            }).addTo(farmMap);
+            
+            setTimeout(() => {
+                if (farmMap) farmMap.invalidateSize();
+            }, 500);
+            
+            console.log('✅ Map ready');
+            
+        } catch (error) {
+            console.error('Map error:', error);
+            if (mapLoading) mapLoading.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Map could not load.';
+        }
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+    
+    // Initialize everything
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('🚀 Initializing distance page...');
+        
+        parseFarmsData();
+        
+        if (FARMS.length > 0) {
+            updateFarmCounts(FARMS.length);
+            renderFarms(false);
+            initShowAllButton();
+            
+            // Update timeline text with actual farm count
+            const timeline2024Text = document.querySelector('.timeline-item:last-child .timeline-content p');
+            if (timeline2024Text) {
+                timeline2024Text.innerHTML = timeline2024Text.innerHTML.replace(/\d+(?= family farms)/, FARMS.length);
+            }
+            
+            // Initialize map
             const checkLeaflet = setInterval(() => {
                 if (typeof L !== 'undefined' && document.getElementById('farmMap')) {
                     clearInterval(checkLeaflet);
-                    setTimeout(initFarmMap, 500);
+                    setTimeout(initFarmMap, 300);
                 }
             }, 100);
             
@@ -839,11 +877,45 @@
                 clearInterval(checkLeaflet);
                 if (!farmMap) initFarmMap();
             }, 3000);
-            
-            window.addEventListener('resize', () => {
-                if (farmMap) farmMap.invalidateSize();
-            });
+        } else {
+            console.log('⚠️ No farms found, fetching from API...');
+            fetch('/api/pizzas/')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.pizzas) {
+                        const uniqueFarms = new Map();
+                        data.pizzas.forEach(pizza => {
+                            if (pizza.farm) {
+                                const farmName = pizza.farm.split(',')[0].trim();
+                                if (!uniqueFarms.has(farmName)) {
+                                    uniqueFarms.set(farmName, {
+                                        name: farmName,
+                                        location: pizza.farm.includes(',') ? pizza.farm.split(',')[1].trim() : 'Nagano Prefecture',
+                                        latitude: pizza.latitude,
+                                        longitude: pizza.longitude,
+                                        pizzas: [pizza.name],
+                                        farm_story: pizza.farm_story
+                                    });
+                                } else {
+                                    uniqueFarms.get(farmName).pizzas.push(pizza.name);
+                                }
+                            }
+                        });
+                        
+                        FARMS = Array.from(uniqueFarms.values());
+                        console.log('✅ Loaded', FARMS.length, 'farms from API');
+                        updateFarmCounts(FARMS.length);
+                        renderFarms(false);
+                        initShowAllButton();
+                        setTimeout(initFarmMap, 500);
+                    }
+                })
+                .catch(err => console.log('Could not fetch farms:', err));
+        }
+        
+        window.addEventListener('resize', () => {
+            if (farmMap) farmMap.invalidateSize();
         });
-    }
+    });
 </script>
 {% endblock %}

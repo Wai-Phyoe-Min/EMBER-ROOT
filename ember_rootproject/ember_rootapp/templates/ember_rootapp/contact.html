@@ -441,6 +441,9 @@
             left: auto;
             margin-top: 1rem;
         }
+        .contact-card .contact-detail a {
+            word-break: break-all;
+        }
     }
     
     @media (max-width: 576px) {
@@ -458,6 +461,40 @@
 
     .faq-answer .text-danger {
         color: #dc3545 !important;
+    }
+    
+    /* Business hours status indicator */
+    .status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .status-indicator.open {
+        background-color: #28a745;
+        box-shadow: 0 0 5px #28a745;
+        animation: pulse-green 1.5s infinite;
+    }
+    
+    .status-indicator.closed {
+        background-color: #dc3545;
+    }
+    
+    @keyframes pulse-green {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+        }
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 5px rgba(40, 167, 69, 0);
+        }
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+        }
     }
 </style>
 {% endblock %}
@@ -722,8 +759,8 @@
                             Where do you source your ingredients?
                             <i class="bi bi-chevron-down"></i>
                         </div>
-                        <div class="faq-answer">
-                            Everything comes from within 120 kilometers of Karuizawa. We partner with <span class="farm-count-dynamic">0</span> family farms across Nagano Prefecture. <a href="{% url 'distance' %}">See our farm map →</a>
+                        <div class="faq-answer" id="dynamicSourcingAnswer">
+                            Everything comes from within 120 kilometers of Karuizawa. We partner with <span id="contactFarmCount" class="farm-count-dynamic">0</span> family farms across Nagano Prefecture. <a href="{% url 'distance' %}">See our farm map →</a>
                         </div>
                     </div>
                 </div>
@@ -742,16 +779,16 @@
                 <p class="text-muted mb-4">Follow us for daily stories from the oven, farm visits, and seasonal menu updates.</p>
                 
                 <div class="social-links">
-                    <a href="https://www.instagram.com/" class="social-link" target="_blank">
+                    <a href="https://www.instagram.com/" class="social-link" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-instagram"></i>
                     </a>
-                    <a href="https://www.facebook.com/" class="social-link" target="_blank">
+                    <a href="https://www.facebook.com/" class="social-link" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-facebook"></i>
                     </a>
-                    <a href="https://twitter.com/" class="social-link" target="_blank">
+                    <a href="https://twitter.com/" class="social-link" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-twitter-x"></i>
                     </a>
-                    <a href="https://www.tiktok.com/" class="social-link" target="_blank">
+                    <a href="https://www.tiktok.com/" class="social-link" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-tiktok"></i>
                     </a>
                 </div>
@@ -763,6 +800,33 @@
 
 {% block extra_js %}
 <script>
+    // Load farm count for contact page
+    function loadContactFarmCount() {
+        const farmElement = document.getElementById('contactFarmCount');
+        if (!farmElement) return;
+        
+        // Try cache first
+        const cached = localStorage.getItem('emberPizzasCache');
+        if (cached) {
+            try {
+                const pizzas = JSON.parse(cached);
+                const uniqueFarms = new Set(pizzas.map(p => p.farm).filter(f => f));
+                farmElement.textContent = uniqueFarms.size;
+            } catch(e) {}
+        }
+        
+        // Fetch fresh data
+        fetch('/api/pizzas/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.pizzas) {
+                    const uniqueFarms = new Set(data.pizzas.map(p => p.farm).filter(f => f));
+                    farmElement.textContent = uniqueFarms.size;
+                }
+            })
+            .catch(err => console.log('Error loading farm count:', err));
+    }
+
     // Closing time references
     function updateClosingTimeReferences() {
         fetch('/api/business-hours/')
@@ -782,7 +846,7 @@
                         const closingNote = document.getElementById('typicalClosingNote');
                         if (closingNote) closingNote.textContent = `We typically sell out by ${closingTime}.`;
                         
-                        // Update the "Come early" note (NEW)
+                        // Update the "Come early" note
                         const selloutNote = document.getElementById('dynamicSelloutNote');
                         if (selloutNote) selloutNote.innerHTML = `Come early. We sell out most nights by ${closingTime}.`;
                     }
@@ -790,7 +854,6 @@
             })
             .catch(err => {
                 console.log('Error loading closing time:', err);
-                // Keep defaults if API fails
             });
     }
 
@@ -812,9 +875,19 @@
                             <small class="text-muted">We're closed today. ${today === 'Monday' || today === 'Tuesday' || today === 'Wednesday' ? 'We\'re visiting our partner farms!' : 'See you soon!'}</small>
                         `;
                     } else {
+                        // Check if currently open
+                        const now = new Date();
+                        const currentTime = now.getHours() + now.getMinutes() / 60;
+                        const openParts = h.open.split(':');
+                        const closeParts = h.close.split(':');
+                        const openTime = parseInt(openParts[0]) + parseInt(openParts[1]) / 60;
+                        const closeTime = parseInt(closeParts[0]) + parseInt(closeParts[1]) / 60;
+                        const isOpenNow = currentTime >= openTime && currentTime < closeTime;
+                        const statusIndicator = isOpenNow ? '<span class="status-indicator open"></span>' : '<span class="status-indicator closed"></span>';
+                        
                         container.innerHTML = `
-                            <span style="color: #28a745; font-weight: 600;">🟢 ${today}: ${h.open} – ${h.close}</span><br>
-                            <small class="text-muted">Last seating 30 minutes before closing. We close earlier if we run out of dough!</small>
+                            ${statusIndicator}<span style="color: ${isOpenNow ? '#28a745' : '#D35400'}; font-weight: 600;">${today}: ${h.open} – ${h.close}</span><br>
+                            <small class="text-muted">Last seating 30 minutes before closing. ${isOpenNow ? '🔥 We\'re open now!' : ''}</small>
                         `;
                     }
                 } else {
@@ -843,6 +916,7 @@
                         el.style.color = '#dc3545';
                     } else {
                         el.textContent = `Today: ${h.open} – ${h.close}`;
+                        el.style.color = '';
                     }
                 }
             })
@@ -869,7 +943,7 @@
                             if (h.status === 'closed') {
                                 html += `<tr><td>${day}</td><td class="closed">${h.note || 'Closed'}</td></tr>`;
                             } else {
-                                html += `<tr><td>${day}</td><td><strong>${h.open} – ${h.close}</strong></td></tr>`;
+                                html += `<tr><td>${day}</td><td><strong>${h.open} – ${h.close}</strong>${h.note ? `<div><small class="text-muted">${h.note}</small></div>` : ''}</td></tr>`;
                             }
                         }
                     });
@@ -883,26 +957,46 @@
             });
     }
 
+    // Initialize map with better error handling
+    function initContactMap() {
+        const mapContainer = document.getElementById('contactMap');
+        if (!mapContainer || typeof L === 'undefined') {
+            console.log('Map container not found or Leaflet not loaded');
+            return;
+        }
+        
+        const karuizawaLat = 36.348;
+        const karuizawaLng = 138.597;
+        
+        const map = L.map('contactMap').setView([karuizawaLat, karuizawaLng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Custom icon for map
+        const customIcon = L.divIcon({
+            html: '<div style="background: #D35400; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"><i class="bi bi-fire" style="color: white; font-size: 1rem;"></i></div>',
+            iconSize: [36, 36],
+            popupAnchor: [0, -18]
+        });
+        
+        L.marker([karuizawaLat, karuizawaLng], { icon: customIcon }).addTo(map)
+            .bindPopup('<strong>EMBER & ROOT</strong><br>Old soba shop near Kumoba Pond')
+            .openPopup();
+        
+        return map;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        // Load all dynamic content
         loadDynamicHours();
         loadCallHours();
         loadTodayHoursContact();
         updateClosingTimeReferences();
-        // Map
-        const mapContainer = document.getElementById('contactMap');
-        if (mapContainer && typeof L !== 'undefined') {
-            const karuizawaLat = 36.348;
-            const karuizawaLng = 138.597;
-            
-            const map = L.map('contactMap').setView([karuizawaLat, karuizawaLng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-            
-            L.marker([karuizawaLat, karuizawaLng]).addTo(map)
-                .bindPopup('<b>Ember & Root</b><br>Old soba shop near Kumoba Pond')
-                .openPopup();
-        }
+        loadContactFarmCount();
+        
+        // Initialize map
+        initContactMap();
         
         // FAQ Accordion
         document.querySelectorAll('.faq-question').forEach(question => {
@@ -914,13 +1008,16 @@
                     if (q !== question) {
                         q.nextElementSibling.classList.remove('show');
                         q.classList.remove('active');
-                        q.querySelector('i').style.transform = '';
+                        const otherIcon = q.querySelector('i');
+                        if (otherIcon) otherIcon.style.transform = '';
                     }
                 });
                 
                 answer.classList.toggle('show');
                 question.classList.toggle('active');
-                icon.style.transform = answer.classList.contains('show') ? 'rotate(180deg)' : '';
+                if (icon) {
+                    icon.style.transform = answer.classList.contains('show') ? 'rotate(180deg)' : '';
+                }
             });
         });
         
@@ -1021,7 +1118,7 @@
         }
 
         // Real-time validation handlers (only for guest users)
-        if (!isLoggedIn) {
+        if (!isLoggedIn && nameInput && emailInput) {
             nameInput.addEventListener('input', function() {
                 const error = validateName(this.value.trim());
                 showFieldError(this, nameError, error);
@@ -1053,46 +1150,50 @@
             });
         }
 
-        messageInput.addEventListener('input', function() {
-            const value = this.value;
-            const error = validateMessage(value);
-            if (!isLoggedIn) {
-                showFieldError(this, messageError, error);
-            }
-            updateCharCounter(value);
-            if (!error && value.length >= 10) {
-                showFieldSuccess(this);
-            }
-            updateSubmitButton();
-        });
+        if (messageInput) {
+            messageInput.addEventListener('input', function() {
+                const value = this.value;
+                const error = validateMessage(value);
+                if (!isLoggedIn && messageError) {
+                    showFieldError(this, messageError, error);
+                }
+                updateCharCounter(value);
+                if (!error && value.length >= 10) {
+                    showFieldSuccess(this);
+                }
+                updateSubmitButton();
+            });
 
-        messageInput.addEventListener('blur', function() {
-            const error = validateMessage(this.value);
-            if (!isLoggedIn) {
-                showFieldError(this, messageError, error);
-            }
-            updateSubmitButton();
-        });
+            messageInput.addEventListener('blur', function() {
+                const error = validateMessage(this.value);
+                if (!isLoggedIn && messageError) {
+                    showFieldError(this, messageError, error);
+                }
+                updateSubmitButton();
+            });
+        }
 
         // Initialize char counter
-        updateCharCounter(messageInput.value);
+        if (messageInput) updateCharCounter(messageInput.value);
 
         // Check if form is valid and enable/disable submit button
         function isFormValid() {
-            const nameValid = isLoggedIn ? true : !validateName(nameInput.value.trim());
-            const emailValid = isLoggedIn ? true : !validateEmail(emailInput.value.trim());
-            const messageValid = !validateMessage(messageInput.value);
+            const nameValid = isLoggedIn || (nameInput && !validateName(nameInput.value.trim()));
+            const emailValid = isLoggedIn || (emailInput && !validateEmail(emailInput.value.trim()));
+            const messageValid = messageInput && !validateMessage(messageInput.value);
             
             return nameValid && emailValid && messageValid;
         }
 
         function updateSubmitButton() {
-            if (isFormValid()) {
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
-            } else {
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.6';
+            if (submitBtn) {
+                if (isFormValid()) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                } else {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.6';
+                }
             }
         }
 
@@ -1105,9 +1206,9 @@
                 e.preventDefault();
                 
                 // Get values (from inputs or hidden fields)
-                const nameValue = nameInput.value.trim();
-                const emailValue = emailInput.value.trim();
-                const messageValue = messageInput.value;
+                const nameValue = nameInput ? nameInput.value.trim() : '';
+                const emailValue = emailInput ? emailInput.value.trim() : '';
+                const messageValue = messageInput ? messageInput.value : '';
                 
                 // Validation
                 let isValid = true;
@@ -1115,40 +1216,49 @@
                 if (!isLoggedIn) {
                     const nameError_msg = validateName(nameValue);
                     const emailError_msg = validateEmail(emailValue);
-                    showFieldError(nameInput, nameError, nameError_msg);
-                    showFieldError(emailInput, emailError, emailError_msg);
+                    if (nameError) showFieldError(nameInput, nameError, nameError_msg);
+                    if (emailError) showFieldError(emailInput, emailError, emailError_msg);
                     if (nameError_msg || emailError_msg) isValid = false;
                 }
                 
                 const messageError_msg = validateMessage(messageValue);
-                if (!isLoggedIn) {
+                if (!isLoggedIn && messageError) {
                     showFieldError(messageInput, messageError, messageError_msg);
                 }
                 if (messageError_msg) isValid = false;
                 
                 if (!isValid) {
                     if (typeof window.showToast === 'function') {
-                        window.showToast('Please correct the errors before submitting.', false);
+                        window.showToast('Please correct the errors before submitting.', 'error');
                     }
                     return;
                 }
                 
+                // Get CSRF token
+                let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+                if (!csrfToken) {
+                    const cookieMatch = document.cookie.match(/csrftoken=([^;]+)/);
+                    if (cookieMatch) csrfToken = cookieMatch[1];
+                }
+                
                 // Submit form
-                submitBtn.classList.add('loading');
-                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>SENDING...';
-                submitBtn.disabled = true;
+                if (submitBtn) {
+                    submitBtn.classList.add('loading');
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>SENDING...';
+                    submitBtn.disabled = true;
+                }
                 
                 try {
                     const response = await fetch('/ajax/submit-contact/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            'X-CSRFToken': csrfToken
                         },
                         body: JSON.stringify({
                             name: nameValue,
                             email: emailValue,
-                            subject: subjectSelect.value,
+                            subject: subjectSelect ? subjectSelect.value : 'general',
                             message: messageValue
                         })
                     });
@@ -1156,52 +1266,53 @@
                     const data = await response.json();
                     
                     if (data.success) {
-                        successMessageText.textContent = data.message;
-                        successMessage.style.display = 'block';
+                        if (successMessageText) successMessageText.textContent = data.message;
+                        if (successMessage) successMessage.style.display = 'block';
                         form.reset();
                         
                         // Reset validation state
                         if (!isLoggedIn) {
-                            nameInput.classList.remove('success', 'error');
-                            emailInput.classList.remove('success', 'error');
+                            if (nameInput) nameInput.classList.remove('success', 'error');
+                            if (emailInput) emailInput.classList.remove('success', 'error');
                         }
-                        messageInput.classList.remove('success', 'error');
-                        updateCharCounter('');
+                        if (messageInput) messageInput.classList.remove('success', 'error');
+                        if (charCounter) updateCharCounter('');
                         updateSubmitButton();
                         
                         if (typeof window.showToast === 'function') {
-                            window.showToast('✨ Thanks! We\'ll get back to you soon.');
+                            window.showToast('✨ Thanks! We\'ll get back to you soon.', 'success');
                         }
                         
                         setTimeout(() => {
-                            successMessage.style.display = 'none';
+                            if (successMessage) successMessage.style.display = 'none';
                         }, 5000);
                     } else {
                         if (data.errors) {
                             for (const [field, error] of Object.entries(data.errors)) {
-                                if (field === 'name' && !isLoggedIn) {
+                                if (field === 'name' && !isLoggedIn && nameError) {
                                     showFieldError(nameInput, nameError, error);
-                                } else if (field === 'email' && !isLoggedIn) {
+                                } else if (field === 'email' && !isLoggedIn && emailError) {
                                     showFieldError(emailInput, emailError, error);
-                                } else if (field === 'message') {
-                                    if (!isLoggedIn) {
-                                        showFieldError(messageInput, messageError, error);
-                                    }
+                                } else if (field === 'message' && !isLoggedIn && messageError) {
+                                    showFieldError(messageInput, messageError, error);
                                 }
                             }
                         }
                         if (typeof window.showToast === 'function') {
-                            window.showToast(data.message || 'Please check the form for errors.', false);
+                            window.showToast(data.message || 'Please check the form for errors.', 'error');
                         }
                     }
                 } catch (error) {
+                    console.error('Form submission error:', error);
                     if (typeof window.showToast === 'function') {
-                        window.showToast('Network error. Please try again.', false);
+                        window.showToast('Network error. Please try again.', 'error');
                     }
                 } finally {
-                    submitBtn.classList.remove('loading');
-                    submitBtn.innerHTML = '<i class="bi bi-send-fill me-2"></i>SEND MESSAGE';
-                    updateSubmitButton();
+                    if (submitBtn) {
+                        submitBtn.classList.remove('loading');
+                        submitBtn.innerHTML = '<i class="bi bi-send-fill me-2"></i>SEND MESSAGE';
+                        updateSubmitButton();
+                    }
                 }
             });
         }
@@ -1216,6 +1327,12 @@
                 card.style.transform = 'translateY(0)';
             }, index * 100);
         });
+        
+        // Update status every minute
+        setInterval(() => {
+            loadTodayHoursContact();
+            loadCallHours();
+        }, 60000);
     });
 </script>
 {% endblock %}

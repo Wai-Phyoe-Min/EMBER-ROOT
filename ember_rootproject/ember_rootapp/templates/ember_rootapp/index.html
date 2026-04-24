@@ -12,12 +12,12 @@
                 <span class="hero-badge">Est. 2019 · Karuizawa, Nagano</span>
                 <h1 class="hero-title">What the soil <em>remembers,</em><br>the fire reveals.</h1>
                 <p class="hero-subtitle">
-                    <span class="pizza-count-dynamic">{{ featured_pizzas.count|default:"0" }}</span> wood-fired pizzas. 
-                    <span class="farm-count-dynamic">0</span> farms. 
+                    <span id="heroPizzaCount" class="pizza-count-dynamic">{{ featured_pizzas.count|default:"0" }}</span> wood-fired pizzas. 
+                    <span id="heroFarmCount" class="farm-count-dynamic">0</span> farms. 
                     One 900-degree oven. From the mountains of Nagano, we source everything within 120 kilometers.
                 </p>
                 <div class="d-flex gap-4 align-items-center mb-4">
-                    <div class="stat-badge"><strong class="farm-count-dynamic">0</strong> Partner Farms</div>
+                    <div class="stat-badge"><strong id="statFarmCount" class="farm-count-dynamic">0</strong> Partner Farms</div>
                     <div class="stat-badge"><strong>120</strong> km Radius</div>
                     <div class="stat-badge"><strong>900°</strong> Oven Temp</div>
                 </div>
@@ -31,7 +31,10 @@
             <div class="col-lg-6">
                 <div class="hero-image-wrapper">
                     <img src="{% static 'ember_rootapp/images/home_pizza.jpg' %}" 
-                         alt="Wood-fired pizza emerging from oven">
+                         alt="Wood-fired pizza emerging from oven"
+                         loading="eager"
+                         width="600"
+                         height="400">
                 </div>
             </div>
         </div>
@@ -60,12 +63,12 @@
                         <span class="bestseller-tag"><i class="bi bi-star-fill me-1"></i>BESTSELLER</span>
                         {% endif %}
                         {% if pizza.image %}
-                        <img src="{{ pizza.image }}" alt="{{ pizza.name }} Pizza">
+                        <img src="{{ pizza.image }}" alt="{{ pizza.name }} Pizza" loading="lazy">
                         {% else %}
-                        <img src="https://placehold.co/400x400/1E3F20/FFFFFF?text={{ pizza.name|urlencode }}" alt="{{ pizza.name }} Pizza">
+                        <img src="https://placehold.co/400x400/1E3F20/FFFFFF?text={{ pizza.name|urlencode }}" alt="{{ pizza.name }} Pizza" loading="lazy">
                         {% endif %}
                         <span class="origin-badge">
-                            <i class="bi bi-pin-map-fill"></i> TRACE TO SOURCE
+                            <i class="bi bi-pin-map-fill"></i> SEE THE SOURCE
                         </span>
                     </div>
                     <div class="pizza-content">
@@ -157,162 +160,177 @@
 
 {% block extra_js %}
 <script>
-    // Ensure PIZZAS is loaded immediately for cart pairing
-    (function ensurePizzasLoaded() {
-        // Try cache first for instant availability
+    // Global PIZZAS data for index page
+    (function loadIndexData() {
+        console.log('🔄 Loading data for index page...');
+        
+        // Try cache first for instant display
         const cached = localStorage.getItem('emberPizzasCache');
         if (cached) {
             try {
-                window.PIZZAS = JSON.parse(cached);
-            } catch(e) {}
+                const pizzas = JSON.parse(cached);
+                if (pizzas && pizzas.length) {
+                    updateCounts(pizzas);
+                }
+            } catch(e) {
+                console.log('Cache parse error:', e);
+            }
         }
         
-        // Then fetch fresh data
+        // Fetch fresh data
         fetch('/api/pizzas/')
             .then(response => response.json())
             .then(data => {
-                if (data.pizzas) {
+                if (data.pizzas && data.pizzas.length) {
                     window.PIZZAS = data.pizzas;
                     localStorage.setItem('emberPizzasCache', JSON.stringify(data.pizzas));
-                    // Update cart UI to show pairings if cart exists
-                    if (typeof window.updateCartUI === 'function') {
-                        setTimeout(() => window.updateCartUI(), 50);
-                    }
-                }
-            })
-            .catch(err => console.log('Could not preload PIZZAS:', err));
-    })();
-
-    // Load PIZZAS data and update counts
-    (function loadPizzasData() {
-        console.log('🔄 Loading PIZZAS for index page...');
-        fetch('/api/pizzas/')
-            .then(response => response.json())
-            .then(data => {
-                if (data.pizzas) {
-                    window.PIZZAS = data.pizzas;
-                    const pizzaCount = data.pizzas.length;
-                    
-                    // Calculate unique farms
-                    const uniqueFarms = new Set(data.pizzas.map(p => p.farm));
-                    const farmCount = uniqueFarms.size;
-                    
-                    console.log('✅ Loaded:', pizzaCount, 'pizzas from', farmCount, 'farms');
-                    
-                    // Update pizza count displays
-                    document.querySelectorAll('.pizza-count-dynamic').forEach(el => {
-                        el.textContent = pizzaCount;
-                    });
-                    
-                    // Update farm count displays
-                    document.querySelectorAll('.farm-count-dynamic').forEach(el => {
-                        el.textContent = farmCount;
-                    });
-                    
-                    // Update stat badge
-                    const statBadge = document.querySelector('.stat-badge strong');
-                    if (statBadge && statBadge.parentElement.textContent.includes('Partner Farms')) {
-                        statBadge.textContent = farmCount;
-                    }
-                    
-                    // Update footer
-                    document.querySelectorAll('.footer-farm-count').forEach(el => {
-                        el.textContent = farmCount;
-                    });
-                    
-                    localStorage.setItem('emberPizzasCache', JSON.stringify(data.pizzas));
+                    updateCounts(data.pizzas);
                     
                     // Update cart UI
                     if (typeof window.updateCartUI === 'function') {
                         setTimeout(() => window.updateCartUI(), 50);
                     }
+                } else if (data.pizzas && data.pizzas.length === 0) {
+                    console.log('No pizzas found in API');
                 }
             })
             .catch(err => {
-                console.log('❌ Could not load pizzas from API, trying cache...');
-                const cached = localStorage.getItem('emberPizzasCache');
-                if (cached) {
+                console.log('Could not load pizzas from API:', err);
+                // Try cache again as fallback
+                const cachedFallback = localStorage.getItem('emberPizzasCache');
+                if (cachedFallback) {
                     try {
-                        const pizzas = JSON.parse(cached);
-                        const pizzaCount = pizzas.length;
-                        const uniqueFarms = new Set(pizzas.map(p => p.farm));
-                        const farmCount = uniqueFarms.size;
-                        
-                        document.querySelectorAll('.pizza-count-dynamic').forEach(el => {
-                            el.textContent = pizzaCount;
-                        });
-                        document.querySelectorAll('.farm-count-dynamic').forEach(el => {
-                            el.textContent = farmCount;
-                        });
+                        const pizzas = JSON.parse(cachedFallback);
+                        if (pizzas && pizzas.length) {
+                            updateCounts(pizzas);
+                        }
                     } catch(e) {}
                 }
             });
     })();
-
-    // Global toast function if not defined in main.js
-    if (typeof window.showToast !== 'function') {
-        window.showToast = function(message, isSuccess = true) {
-            const toast = document.createElement('div');
-            toast.className = 'dashboard-toast';
-            toast.textContent = message;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '24px';
-            toast.style.right = '24px';
-            toast.style.padding = '0.9rem 1.2rem';
-            toast.style.background = isSuccess ? 'rgba(26, 26, 46, 0.95)' : '#dc3545';
-            toast.style.color = 'white';
-            toast.style.borderRadius = '18px';
-            toast.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.22)';
-            toast.style.zIndex = '9999';
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-            toast.style.transform = 'translateY(12px)';
-            document.body.appendChild(toast);
-            
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0)';
-            });
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(12px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        };
+    
+    function updateCounts(pizzas) {
+        if (!pizzas || !pizzas.length) return;
+        
+        const pizzaCount = pizzas.length;
+        
+        // Calculate unique farms
+        const uniqueFarms = new Set();
+        pizzas.forEach(pizza => {
+            if (pizza.farm && pizza.farm.trim()) {
+                uniqueFarms.add(pizza.farm.trim());
+            }
+        });
+        const farmCount = uniqueFarms.size;
+        
+        console.log(`✅ Index: ${pizzaCount} pizzas from ${farmCount} farms`);
+        
+        // Update all pizza count displays
+        document.querySelectorAll('.pizza-count-dynamic').forEach(el => {
+            el.textContent = pizzaCount;
+        });
+        
+        // Update all farm count displays
+        document.querySelectorAll('.farm-count-dynamic').forEach(el => {
+            el.textContent = farmCount;
+        });
+        
+        // Update footer (already handled by base.html, but just in case)
+        document.querySelectorAll('.footer-farm-count').forEach(el => {
+            el.textContent = farmCount;
+        });
+        
+        // Force re-render of any elements that might need these values
+        const event = new CustomEvent('countsUpdated', { detail: { pizzaCount, farmCount } });
+        document.dispatchEvent(event);
     }
     
-    // Show story modal
-    window.showStoryModal = function() {
-        window.showToast('📖 Kenji-san will be at the oven tonight. Come say hello!');
-    };
-    
-    // Show distance modal
-    window.showDistanceModal = function() {
-        window.showToast('🗺️ All farms within 120km of Karuizawa. Every one has a story.');
-    };
+    // Global fallback toast if main.js not loaded
+    if (typeof window.showToast !== 'function') {
+        window.showToast = function(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast-modern ${type}`;
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+            const title = type === 'success' ? 'Added!' : type === 'error' ? 'Error' : 'Info';
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <div class="toast-close" onclick="this.closest('.toast-modern').remove()">✕</div>
+            `;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 4000);
+        };
+    }
     
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', function() {
         // Attach add to cart events
-        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+        const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+        console.log(`Found ${addToCartBtns.length} add-to-cart buttons`);
+        
+        addToCartBtns.forEach(btn => {
+            // Remove any existing listeners to prevent duplicates
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            newBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 const name = this.dataset.name;
                 const price = parseFloat(this.dataset.price);
                 
+                // Show immediate feedback
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check-lg"></i> ADDED!';
+                this.style.background = '#1E3F20';
+                this.style.borderColor = '#1E3F20';
+                
                 if (typeof window.addToCart === 'function') {
                     window.addToCart(name, price);
                 } else {
-                    window.showToast(`🍕 Added ${name} to cart (¥${price.toLocaleString()})`);
+                    window.showToast(`🍕 ${name} added to cart (¥${price.toLocaleString()})`, 'success');
+                    // Store in localStorage as fallback
+                    const cart = JSON.parse(localStorage.getItem('emberCart') || '[]');
+                    const existing = cart.find(item => item.name === name);
+                    if (existing) {
+                        existing.qty += 1;
+                    } else {
+                        cart.push({ name, price: price, qty: 1 });
+                    }
+                    localStorage.setItem('emberCart', JSON.stringify(cart));
                 }
+                
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.style.background = '';
+                    this.style.borderColor = '';
+                }, 800);
             });
         });
         
         // Attach pizza image container click events for origin map
-        document.querySelectorAll('.pizza-image-container').forEach(container => {
-            container.addEventListener('click', function() {
+        const pizzaContainers = document.querySelectorAll('.pizza-image-container');
+        console.log(`Found ${pizzaContainers.length} pizza containers`);
+        
+        pizzaContainers.forEach(container => {
+            // Remove any existing listeners
+            const newContainer = container.cloneNode(true);
+            container.parentNode.replaceChild(newContainer, container);
+            
+            newContainer.addEventListener('click', function(e) {
+                // Don't trigger if clicking on the origin badge or its children
+                if (e.target.closest('.origin-badge')) return;
+                
                 const pizza = this.dataset.pizza;
                 const farm = this.dataset.farm;
                 const lat = parseFloat(this.dataset.lat);
@@ -320,8 +338,56 @@
                 
                 if (typeof window.showOriginMap === 'function') {
                     window.showOriginMap(pizza, farm, lat, lng);
+                } else {
+                    window.showToast(`📍 ${pizza} comes from ${farm}`, 'info');
                 }
             });
+        });
+        
+        // Add hover effect to stat badges
+        const statBadges = document.querySelectorAll('.stat-badge');
+        statBadges.forEach(badge => {
+            badge.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.transition = 'transform 0.2s ease';
+            });
+            badge.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+            });
+        });
+        
+        // Initialize scroll animations for hero section
+        const heroSection = document.querySelector('.hero-section');
+        if (heroSection) {
+            heroSection.style.opacity = '0';
+            heroSection.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                heroSection.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                heroSection.style.opacity = '1';
+                heroSection.style.transform = 'translateY(0)';
+            }, 100);
+        }
+        
+        // Animate philosophy cards on scroll
+        const philosophyCards = document.querySelectorAll('.philosophy-card');
+        const cardObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '0';
+                    entry.target.style.transform = 'translateY(30px)';
+                    setTimeout(() => {
+                        entry.target.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }, 100);
+                    cardObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+        
+        philosophyCards.forEach(card => {
+            card.style.opacity = '0';
+            cardObserver.observe(card);
         });
     });
 </script>

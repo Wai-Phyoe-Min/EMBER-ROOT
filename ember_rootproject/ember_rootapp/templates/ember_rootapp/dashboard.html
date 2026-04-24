@@ -574,14 +574,14 @@
         box-shadow: 0 26px 60px rgba(15, 23, 42, 0.18);
     }
 
-    /* Loading Animation */
+    /* Loading skeleton for dashboard */
     .loading-skeleton {
         background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
         background-size: 200% 100%;
         animation: shimmer 1.5s infinite;
-        border-radius: 4px;
+        border-radius: 8px;
     }
-    
+
     @keyframes shimmer {
         0% { background-position: -200% 0; }
         100% { background-position: 200% 0; }
@@ -1165,6 +1165,34 @@
 
 {% block extra_js %}
 <script>
+    // Load dynamic counts for dashboard
+    function loadDashboardCounts() {
+        // Update farm count in footer if needed
+        fetch('/api/stats/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.farm_count) {
+                    document.querySelectorAll('.farm-count-dynamic, .footer-farm-count').forEach(el => {
+                        if (el) el.textContent = data.farm_count;
+                    });
+                }
+            })
+            .catch(err => console.log('Error loading stats:', err));
+        
+        // Update pizza count in footer
+        fetch('/api/pizzas/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.pizzas) {
+                    const pizzaCount = data.pizzas.length;
+                    document.querySelectorAll('.pizza-count-dynamic').forEach(el => {
+                        if (el) el.textContent = pizzaCount;
+                    });
+                }
+            })
+            .catch(err => console.log('Error loading pizza count:', err));
+    }
+
     // Load PIZZAS immediately for cart pairing
     (function ensurePizzasLoaded() {
         const cached = localStorage.getItem('emberPizzasCache');
@@ -1392,23 +1420,159 @@
             const response = await fetch(`/ajax/favorite/${pizzaId}/`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
             });
             
             const result = await response.json();
             
             if (result.success) {
-                window.showToast(`❤️ Removed ${pizzaName} from favorites`, 'success', 'Favorites Updated');
-                // Reload favorites tab or remove element
-                setTimeout(() => location.reload(), 800);
+                // Update localStorage
+                let favorites = JSON.parse(localStorage.getItem('emberFavorites') || '[]');
+                favorites = favorites.filter(name => name !== pizzaName);
+                localStorage.setItem('emberFavorites', JSON.stringify(favorites));
+                
+                // Update UI - remove the card
+                const favoriteCard = document.querySelector(`.favorite-btn[data-pizza-id="${pizzaId}"]`)?.closest('.col-md-6, .col-lg-4');
+                if (favoriteCard) {
+                    favoriteCard.remove();
+                }
+                
+                // Update favorite count in stats
+                const favoriteCountSpan = document.getElementById('favoriteCount');
+                if (favoriteCountSpan) {
+                    const currentCount = parseInt(favoriteCountSpan.textContent) || 0;
+                    favoriteCountSpan.textContent = currentCount - 1;
+                }
+                
+                // Show message
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`❤️ Removed ${pizzaName} from favorites`, 'info', 'Favorites Updated');
+                } else {
+                    showToast(`Removed ${pizzaName} from favorites`);
+                }
+                
+                // If no favorites left, show empty state
+                const favoritesList = document.getElementById('favoritesList');
+                if (favoritesList && favoritesList.querySelectorAll('.col-md-6').length === 0) {
+                    favoritesList.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="bi bi-heart fs-1 text-muted"></i>
+                            <p class="text-muted mt-2">No favorite pizzas yet</p>
+                            <a href="{% url 'menu' %}" class="btn btn-ember btn-sm">Browse Menu</a>
+                        </div>
+                    `;
+                }
             } else {
-                window.showToast(result.message, 'error', 'Error');
+                if (typeof window.showToast === 'function') {
+                    window.showToast(result.message, 'error', 'Error');
+                } else {
+                    showToast(result.message, false);
+                }
             }
         } catch (error) {
-            window.showToast('An error occurred', 'error', 'Error');
+            console.error('Favorite removal error:', error);
+            showToast('An error occurred', false);
         }
     }
+
+    // Display loading skeleton while loading favorites
+    function showFavoritesSkeleton() {
+        const favoritesList = document.getElementById('favoritesList');
+        if (!favoritesList) return;
+        
+        favoritesList.innerHTML = `
+            <div class="row g-4">
+                ${[1, 2, 3].map(() => `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="pizza-card" style="border: 1px solid var(--border-light);">
+                            <div class="pizza-image-container" style="height: 200px;">
+                                <div class="loading-skeleton" style="width: 100%; height: 100%;"></div>
+                            </div>
+                            <div class="pizza-content p-3">
+                                <div class="loading-skeleton" style="width: 60%; height: 20px; margin-bottom: 10px;"></div>
+                                <div class="loading-skeleton" style="width: 40%; height: 15px; margin-bottom: 10px;"></div>
+                                <div class="loading-skeleton" style="width: 80%; height: 40px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // Poll for order status updates (every 30 seconds)
+    let orderPollingInterval = null;
+
+    function startOrderPolling() {
+        if (orderPollingInterval) clearInterval(orderPollingInterval);
+        
+        orderPollingInterval = setInterval(() => {
+            const ordersTab = document.getElementById('orders');
+            // Only poll if orders tab is visible
+            if (ordersTab && ordersTab.classList.contains('active')) {
+                fetch('/ajax/order-history/?status=all')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success && data.orders) {
+                            updateOrderStatuses(data.orders);
+                        }
+                    })
+                    .catch(err => console.log('Polling error:', err));
+            }
+        }, 30000); // Every 30 seconds
+    }
+
+    function updateOrderStatuses(serverOrders) {
+        const orderCards = document.querySelectorAll('.order-card-modern');
+        
+        orderCards.forEach(card => {
+            const orderNumber = card.querySelector('.order-number')?.textContent.replace('Order #', '').trim();
+            const serverOrder = serverOrders.find(o => o.order_number === orderNumber);
+            
+            if (serverOrder && card.dataset.status !== serverOrder.status) {
+                // Update status
+                card.dataset.status = serverOrder.status;
+                const statusBadge = card.querySelector('.status-badge');
+                if (statusBadge) {
+                    statusBadge.className = `status-badge ${serverOrder.status}`;
+                    statusBadge.innerHTML = getStatusIconHTML(serverOrder.status);
+                }
+                
+                // Show notification for status change
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`Order #${orderNumber} is now ${serverOrder.status_display}`, 'info', 'Order Updated');
+                }
+            }
+        });
+    }
+
+    function getStatusIconHTML(status) {
+        const icons = {
+            'completed': '<i class="bi bi-check-circle-fill"></i> Completed',
+            'confirmed': '<i class="bi bi-check-circle"></i> Confirmed',
+            'preparing': '<i class="bi bi-fire"></i> Preparing',
+            'ready': '<i class="bi bi-box-seam"></i> Ready for Pickup',
+            'pending': '<i class="bi bi-clock"></i> Pending',
+            'cancelled': '<i class="bi bi-x-circle"></i> Cancelled'
+        };
+        return icons[status] || '<i class="bi bi-circle"></i> Pending';
+    }
+
+    // Start polling when orders tab is shown
+    document.querySelector('#orders-tab')?.addEventListener('shown.bs.tab', function() {
+        if (!orderPollingInterval) startOrderPolling();
+    });
+
+    // Stop polling when leaving orders tab
+    document.querySelector('#orders-tab')?.addEventListener('hidden.bs.tab', function() {
+        if (orderPollingInterval) {
+            clearInterval(orderPollingInterval);
+            orderPollingInterval = null;
+        }
+    });
     
     // Update notification settings
     async function updateNotificationSetting(type, enabled) {
@@ -1665,6 +1829,8 @@
     
     // Order filter
     document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardCounts();
+
         const orderFilter = document.getElementById('orderFilter');
         if (orderFilter) {
             orderFilter.addEventListener('change', function() {

@@ -413,13 +413,37 @@
     const SIDES = ensureArray(DJANGO_SIDES);
     const DRINKS = ensureArray(DJANGO_DRINKS);
     
-    // Also set as local variable for this script
     const PIZZAS = window.PIZZAS;
 
     console.log('✅ Menu page loaded with', PIZZAS.length, 'pizzas');
-    console.log('First pizza pairing:', PIZZAS[0]?.recommended_pairing);
     
-    // Favorite management
+    // Calculate farm count from PIZZAS immediately (no API call)
+    function calculateFarmCount() {
+        if (PIZZAS && PIZZAS.length) {
+            const uniqueFarms = new Set();
+            PIZZAS.forEach(pizza => {
+                if (pizza.farm && pizza.farm.trim()) {
+                    uniqueFarms.add(pizza.farm.trim());
+                }
+            });
+            return uniqueFarms.size;
+        }
+        return 0;
+    }
+    
+    // Update stats bar immediately from local data
+    function updateStatsBar() {
+        const farmCount = calculateFarmCount();
+        const pizzaCount = PIZZAS.length;
+        
+        const farmElement = document.getElementById('menuFarmCount');
+        if (farmElement) farmElement.textContent = farmCount;
+        
+        const pizzaElement = document.getElementById('menuPizzaCount');
+        if (pizzaElement) pizzaElement.textContent = pizzaCount;
+    }
+    
+    // Favorite management (keep as is)
     function getFavoritePizzaNames() {
         try {
             return JSON.parse(localStorage.getItem('emberFavorites') || '[]');
@@ -451,39 +475,30 @@
         
         saveFavoritePizzaNames(favorites);
         
-        // Find pizza ID and sync with server if user is authenticated
         const pizza = PIZZAS.find(p => p.name === name);
         if (pizza && pizza.id) {
-            // Check if user is authenticated
             const authArea = document.getElementById('authArea');
             const isAuthenticated = authArea && authArea.querySelector('.user-dropdown') !== null;
             
             if (isAuthenticated) {
-                // Get CSRF token
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
                                 document.querySelector('meta[name="csrf-token"]')?.content ||
                                 window.csrfToken || '';
                 
-                // Sync with server
                 fetch(`/ajax/favorite/${pizza.id}/`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': csrfToken,
                         'Content-Type': 'application/json'
                     }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Favorite synced with server:', data);
-                })
-                .catch(err => console.log('Server sync failed, using localStorage only:', err));
+                }).catch(err => console.log('Server sync failed:', err));
             }
         }
         
         return isNowFavorited;
     }
     
-    // Render sides
+    // Render sides - with lazy loading images
     function renderSides() {
         const container = document.getElementById('sidesContainer');
         if (!container) return;
@@ -500,15 +515,15 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="item-card" style="animation-delay: ${index * 0.05}s">
                         <div class="item-image-container">
-                            <img src="${imageUrl}" alt="${item.name}" 
-                                 onerror="this.src='https://placehold.co/400x400/D35400/FFFFFF?text=${encodeURIComponent(item.name)}'">
+                            <img src="${imageUrl}" alt="${item.name}" loading="lazy"
+                                onerror="this.src='https://placehold.co/400x400/D35400/FFFFFF?text=${encodeURIComponent(item.name)}'">
                         </div>
                         <div class="item-info">
-                            <div class="item-name">${item.name}</div>
-                            <div class="item-desc">${item.description || ''}</div>
+                            <div class="item-name">${escapeHtml(item.name)}</div>
+                            <div class="item-desc">${escapeHtml(item.description || '')}</div>
                             <div class="item-price">¥${item.price.toLocaleString()}</div>
                         </div>
-                        <button class="add-btn" onclick="window.addSideItemToCart('${item.name.replace(/'/g, "\\'")}', ${item.price})">
+                        <button class="add-btn" onclick="window.addSideItemToCart('${escapeHtml(item.name).replace(/'/g, "\\'")}', ${item.price})">
                             ADD TO ORDER
                         </button>
                     </div>
@@ -516,6 +531,17 @@
             `;
         });
         container.innerHTML = html;
+    }
+    
+    // Helper function to escape HTML
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
     
     // Render drinks
@@ -535,15 +561,15 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="item-card" style="animation-delay: ${index * 0.05}s">
                         <div class="item-image-container">
-                            <img src="${imageUrl}" alt="${item.name}"
-                                 onerror="this.src='https://placehold.co/400x400/D35400/FFFFFF?text=${encodeURIComponent(item.name)}'">
+                            <img src="${imageUrl}" alt="${item.name}" loading="lazy"
+                                onerror="this.src='https://placehold.co/400x400/D35400/FFFFFF?text=${encodeURIComponent(item.name)}'">
                         </div>
                         <div class="item-info">
-                            <div class="item-name">${item.name}</div>
-                            <div class="item-desc">${item.description || ''}</div>
+                            <div class="item-name">${escapeHtml(item.name)}</div>
+                            <div class="item-desc">${escapeHtml(item.description || '')}</div>
                             <div class="item-price">¥${item.price.toLocaleString()}</div>
                         </div>
-                        <button class="add-btn" onclick="window.addSideItemToCart('${item.name.replace(/'/g, "\\'")}', ${item.price})">
+                        <button class="add-btn" onclick="window.addSideItemToCart('${escapeHtml(item.name).replace(/'/g, "\\'")}', ${item.price})">
                             ADD TO ORDER
                         </button>
                     </div>
@@ -553,7 +579,6 @@
         container.innerHTML = html;
     }
     
-    // Add side/drink to cart
     window.addSideItemToCart = function(name, price) {
         const btn = event.target;
         const originalText = btn.innerHTML;
@@ -563,7 +588,6 @@
         if (typeof window.addToCart === 'function') {
             window.addToCart(name, price);
         } else {
-            console.warn('addToCart not found, using fallback');
             const cart = JSON.parse(localStorage.getItem('emberCart')) || [];
             const existing = cart.find(item => item.name === name);
             if (existing) {
@@ -580,7 +604,7 @@
         }, 800);
     };
     
-    // Render pizza menu
+    // Render pizza menu - OPTIMIZED
     function renderPizzaMenu() {
         const container = document.getElementById('fullMenuContainer');
         const filterBtns = document.querySelectorAll('.filter-btn');
@@ -596,8 +620,17 @@
         }
         
         let currentCategory = 'all';
+        let cachedHTML = {}; // Cache rendered HTML by category
         
         function renderMenu(category) {
+            // Check cache first
+            if (cachedHTML[category]) {
+                container.innerHTML = cachedHTML[category];
+                attachPizzaEvents();
+                attachFavoriteButtons();
+                return;
+            }
+            
             const filteredPizzas = category === 'all' 
                 ? PIZZAS 
                 : PIZZAS.filter(p => p.category === category);
@@ -610,11 +643,11 @@
             let html = '';
             filteredPizzas.forEach((pizza, index) => {
                 const dietaryTags = (pizza.dietary || []).map(d => 
-                    `<span class="dietary-badge">${d}</span>`
+                    `<span class="dietary-badge">${escapeHtml(d)}</span>`
                 ).join('');
                 
-                const safeName = (pizza.name || 'Unnamed Pizza').replace(/'/g, "\\'");
-                const safeFarm = (pizza.farm || 'Local Farm').replace(/'/g, "\\'");
+                const safeName = escapeHtml(pizza.name || 'Unnamed Pizza').replace(/'/g, "\\'");
+                const safeFarm = escapeHtml(pizza.farm || 'Local Farm').replace(/'/g, "\\'");
                 const pizzaImage = pizza.image || `https://placehold.co/400x400/1E3F20/FFFFFF?text=${encodeURIComponent(safeName)}`;
                 const pizzaFarmLabel = (pizza.farm || 'Local Farm').split(',')[0];
                 
@@ -630,7 +663,7 @@
                                 <button class="favorite-btn ${isPizzaFavorited(safeName) ? 'favorited' : ''}" data-name="${safeName}">
                                     <i class="bi ${isPizzaFavorited(safeName) ? 'bi-heart-fill' : 'bi-heart'}"></i>
                                 </button>
-                                <img src="${pizzaImage}" alt="${safeName} Pizza"
+                                <img src="${pizzaImage}" alt="${safeName} Pizza" loading="lazy"
                                     onerror="this.src='https://placehold.co/400x400/1E3F20/FFFFFF?text=' + encodeURIComponent('${safeName}')">
                                 <span class="origin-badge" onclick="event.stopPropagation(); window.handleSourceClick('${safeName}', '${safeFarm}', ${pizza.latitude || 36.348}, ${pizza.longitude || 138.597})">
                                     <i class="bi bi-pin-map-fill"></i> SEE THE SOURCE
@@ -638,15 +671,15 @@
                             </div>
                             <div class="pizza-content">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h3 class="pizza-title mb-0">${pizza.name}</h3>
+                                    <h3 class="pizza-title mb-0">${escapeHtml(pizza.name)}</h3>
                                 </div>
                                 <div class="mb-2">${dietaryTags}</div>
-                                <p class="pizza-description">${pizza.description || ''}</p>
-                                ${pizza.recommended_pairing ? `<p class="small text-muted mb-2"><strong>Pairs with:</strong> ${pizza.recommended_pairing}${pizza.recommended_pairing_price ? ` (¥${pizza.recommended_pairing_price.toLocaleString()})` : ''}</p>` : ''}
-                                ${pizza.seasonal_note ? `<p class="seasonal-note"><i class="bi bi-calendar3 me-1"></i>${pizza.seasonal_note}</p>` : ''}
+                                <p class="pizza-description">${escapeHtml(pizza.description || '')}</p>
+                                ${pizza.recommended_pairing ? `<p class="small text-muted mb-2"><strong>Pairs with:</strong> ${escapeHtml(pizza.recommended_pairing)}${pizza.recommended_pairing_price ? ` (¥${pizza.recommended_pairing_price.toLocaleString()})` : ''}</p>` : ''}
+                                ${pizza.seasonal_note ? `<p class="seasonal-note"><i class="bi bi-calendar3 me-1"></i>${escapeHtml(pizza.seasonal_note)}</p>` : ''}
                                 <div class="pizza-meta">
                                     <span><i class="bi bi-droplet"></i> ${pizza.calories || 0} cal</span>
-                                    <span><i class="bi bi-pin"></i> ${pizzaFarmLabel}</span>
+                                    <span><i class="bi bi-pin"></i> ${escapeHtml(pizzaFarmLabel)}</span>
                                 </div>
                                 <div class="pizza-footer">
                                     <span class="pizza-price">¥${pizza.price.toLocaleString()}</span>
@@ -662,6 +695,8 @@
                 `;
             });
             
+            // Cache the rendered HTML
+            cachedHTML[category] = html;
             container.innerHTML = html;
             
             attachPizzaEvents();
@@ -738,7 +773,6 @@
         renderMenu('all');
     }
     
-    // Handle source button click
     window.handleSourceClick = function(pizzaName, farmName, lat, lng) {
         if (event) event.stopPropagation();
         if (typeof window.showOriginMap === 'function') {
@@ -747,55 +781,35 @@
             window.showToast(`${pizzaName} comes from ${farmName}`, 'info', '📍 Farm Source');
         }
     };
-
-    // Load dynamic farm count for menu page
-    function loadMenuFarmCount() {
-        fetch('/api/stats/')
-            .then(r => r.json())
-            .then(data => {
-                const farmCount = data.farm_count || 0;
-                const pizzaCount = data.pizza_count || 0;
-                
-                const farmElement = document.getElementById('menuFarmCount');
-                if (farmElement) {
-                    farmElement.textContent = farmCount;
-                }
-                
-                // Also update pizza count in stats bar (though already from Django, keep consistent)
-                const pizzaElement = document.getElementById('menuPizzaCount');
-                if (pizzaElement && pizzaCount > 0) {
-                    pizzaElement.textContent = pizzaCount;
-                }
-            })
-            .catch(err => {
-                console.log('Error loading farm count:', err);
-                // Count from PIZZAS array as fallback
-                if (window.PIZZAS && window.PIZZAS.length) {
-                    const uniqueFarms = new Set();
-                    window.PIZZAS.forEach(pizza => {
-                        if (pizza.farm) uniqueFarms.add(pizza.farm);
-                    });
-                    const farmElement = document.getElementById('menuFarmCount');
-                    if (farmElement) farmElement.textContent = uniqueFarms.size;
-                }
-            });
-    }
     
-    // Initialize when DOM is ready
+    // Initialize everything - use requestIdleCallback for non-critical rendering
     document.addEventListener('DOMContentLoaded', () => {
-        loadMenuFarmCount();
-        renderPizzaMenu();
-        renderSides();
-        renderDrinks();
+        // Update stats bar immediately from local data (no API call)
+        updateStatsBar();
         
-        // Force cart UI update
-        if (typeof window.updateCartUI === 'function') {
-            setTimeout(() => window.updateCartUI(), 100);
+        // Render pizzas (critical)
+        renderPizzaMenu();
+        
+        // Render sides and drinks (less critical, can be slightly delayed)
+        if (typeof requestIdleCallback !== 'undefined') {
+            requestIdleCallback(() => {
+                renderSides();
+                renderDrinks();
+            });
+        } else {
+            setTimeout(() => {
+                renderSides();
+                renderDrinks();
+            }, 50);
         }
         
-        // Re-initialize checkout
+        // Update cart UI after everything
+        if (typeof window.updateCartUI === 'function') {
+            setTimeout(() => window.updateCartUI(), 200);
+        }
+        
         if (typeof window.initCheckout === 'function') {
-            setTimeout(() => window.initCheckout(), 100);
+            setTimeout(() => window.initCheckout(), 200);
         }
     });
 </script>

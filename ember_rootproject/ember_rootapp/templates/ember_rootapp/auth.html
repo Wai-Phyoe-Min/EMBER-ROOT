@@ -399,15 +399,13 @@
         box-shadow: none;
     }
     
-    .btn-auth-modern:disabled:hover {
-        background: #666;
-        transform: none;
-        box-shadow: none;
-    }
-    
     .btn-auth-modern.loading {
         pointer-events: none;
         opacity: 0.7;
+    }
+    
+    .btn-auth-modern.loading span {
+        visibility: hidden;
     }
     
     .btn-auth-modern.loading::after {
@@ -520,25 +518,18 @@
             
             <!-- Login Form -->
             <div id="loginForm" class="auth-form-modern {% if active_tab != 'register' %}active{% endif %}">
-                <form id="loginFormElement" method="post" action="{% url 'auth' %}">
+                <form id="loginFormElement" onsubmit="return false;">
                     {% csrf_token %}
-                    <input type="hidden" name="form_type" value="login">
                     
                     <div class="input-group-modern">
                         <label>Email Address</label>
                         <div class="input-wrapper-modern">
                             <i class="bi bi-envelope-fill input-icon-modern"></i>
-                            <input type="email" class="input-field-modern {% if login_form.username.errors %}error{% endif %}" 
-                                   name="username" id="loginEmail" placeholder="hello@emberandroot.jp" 
-                                   value="{{ login_form.username.value|default:'' }}">
+                            <input type="email" class="input-field-modern" 
+                                   name="username" id="loginEmail" placeholder="hello@emberandroot.jp">
                         </div>
                         <div class="error-message-modern" id="loginEmailError">
-                            <i class="bi bi-exclamation-triangle-fill"></i> 
-                            {% if login_form.username.errors %}
-                                {{ login_form.username.errors.0 }}
-                            {% else %}
-                                Please enter a valid email
-                            {% endif %}
+                            <i class="bi bi-exclamation-triangle-fill"></i> Please enter a valid email
                         </div>
                     </div>
                     
@@ -546,7 +537,7 @@
                         <label>Password</label>
                         <div class="input-wrapper-modern">
                             <i class="bi bi-lock-fill input-icon-modern"></i>
-                            <input type="password" class="input-field-modern {% if login_form.password.errors %}error{% endif %}" 
+                            <input type="password" class="input-field-modern" 
                                    name="password" id="loginPassword" placeholder="Enter your password">
                             <button type="button" class="password-toggle-modern" onclick="togglePasswordField('loginPassword')">
                                 <i class="bi bi-eye-slash"></i>
@@ -558,32 +549,25 @@
                     </div>
                     
                     <button type="submit" class="btn-auth-modern" id="loginBtn">
-                        <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
+                        <span><i class="bi bi-box-arrow-in-right me-2"></i> Sign In</span>
                     </button>
                 </form>
             </div>
             
             <!-- Register Form -->
             <div id="registerForm" class="auth-form-modern {% if active_tab == 'register' %}active{% endif %}">
-                <form id="registerFormElement" method="post" action="{% url 'auth' %}">
+                <form id="registerFormElement" onsubmit="return false;">
                     {% csrf_token %}
-                    <input type="hidden" name="form_type" value="register">
                     
                     <div class="input-group-modern">
                         <label>Full Name</label>
                         <div class="input-wrapper-modern">
                             <i class="bi bi-person-fill input-icon-modern"></i>
-                            <input type="text" class="input-field-modern {% if register_form.first_name.errors %}error{% endif %}" 
-                                   name="first_name" id="registerName" placeholder="Kenji Tanaka"
-                                   value="{{ register_form.first_name.value|default:'' }}">
+                            <input type="text" class="input-field-modern" 
+                                   name="first_name" id="registerName" placeholder="Kenji Tanaka">
                         </div>
                         <div class="error-message-modern" id="registerNameError">
-                            <i class="bi bi-exclamation-triangle-fill"></i> 
-                            {% if register_form.first_name.errors %}
-                                {{ register_form.first_name.errors.0 }}
-                            {% else %}
-                                Please enter your name
-                            {% endif %}
+                            <i class="bi bi-exclamation-triangle-fill"></i> Please enter your name
                         </div>
                     </div>
                     
@@ -591,17 +575,11 @@
                         <label>Email Address</label>
                         <div class="input-wrapper-modern">
                             <i class="bi bi-envelope-fill input-icon-modern"></i>
-                            <input type="email" class="input-field-modern {% if register_form.email.errors %}error{% endif %}" 
-                                   name="email" id="registerEmail" placeholder="hello@emberandroot.jp"
-                                   value="{{ register_form.email.value|default:'' }}">
+                            <input type="email" class="input-field-modern" 
+                                   name="email" id="registerEmail" placeholder="hello@emberandroot.jp">
                         </div>
                         <div class="error-message-modern" id="registerEmailError">
-                            <i class="bi bi-exclamation-triangle-fill"></i> 
-                            {% if register_form.email.errors %}
-                                {{ register_form.email.errors.0 }}
-                            {% else %}
-                                Please enter a valid email
-                            {% endif %}
+                            <i class="bi bi-exclamation-triangle-fill"></i> Please enter a valid email
                         </div>
                     </div>
                     
@@ -610,7 +588,7 @@
                         <div class="input-wrapper-modern">
                             <i class="bi bi-telephone-fill input-icon-modern"></i>
                             <input type="tel" class="input-field-modern" name="phone" id="registerPhone" 
-                                   placeholder="+81 XX-XXXX-XXXX" value="{{ register_form.phone.value|default:'' }}">
+                                   placeholder="+81 XX-XXXX-XXXX">
                         </div>
                     </div>
                     
@@ -618,7 +596,7 @@
                         <label>Password</label>
                         <div class="input-wrapper-modern">
                             <i class="bi bi-lock-fill input-icon-modern"></i>
-                            <input type="password" class="input-field-modern {% if register_form.password1.errors %}error{% endif %}" 
+                            <input type="password" class="input-field-modern" 
                                    name="password1" id="registerPassword" placeholder="Create a strong password">
                             <button type="button" class="password-toggle-modern" onclick="togglePasswordField('registerPassword')">
                                 <i class="bi bi-eye-slash"></i>
@@ -634,12 +612,7 @@
                             <div class="strength-text" id="strengthText">Password strength</div>
                         </div>
                         <div class="error-message-modern" id="registerPasswordError">
-                            <i class="bi bi-exclamation-triangle-fill"></i> 
-                            {% if register_form.password1.errors %}
-                                {{ register_form.password1.errors.0 }}
-                            {% else %}
-                                Password must be at least 6 characters
-                            {% endif %}
+                            <i class="bi bi-exclamation-triangle-fill"></i> Password must be at least 6 characters
                         </div>
                     </div>
                     
@@ -647,25 +620,19 @@
                         <label>Confirm Password</label>
                         <div class="input-wrapper-modern">
                             <i class="bi bi-lock-fill input-icon-modern"></i>
-                            <input type="password" class="input-field-modern {% if register_form.password2.errors %}error{% endif %}" 
+                            <input type="password" class="input-field-modern" 
                                    name="password2" id="registerConfirmPassword" placeholder="Confirm your password">
                             <button type="button" class="password-toggle-modern" onclick="togglePasswordField('registerConfirmPassword')">
                                 <i class="bi bi-eye-slash"></i>
                             </button>
                         </div>
                         <div class="error-message-modern" id="registerConfirmError">
-                            <i class="bi bi-exclamation-triangle-fill"></i> 
-                            {% if register_form.password2.errors %}
-                                {{ register_form.password2.errors.0 }}
-                            {% else %}
-                                Passwords do not match
-                            {% endif %}
+                            <i class="bi bi-exclamation-triangle-fill"></i> Passwords do not match
                         </div>
                     </div>
                     
                     <label class="checkbox-modern">
-                        <input type="checkbox" name="terms_agree" id="termsAgree" 
-                               {% if register_form.terms_agree.value %}checked{% endif %}> 
+                        <input type="checkbox" name="terms_agree" id="termsAgree"> 
                         <span>I agree to the Terms of Service and Privacy Policy</span>
                     </label>
                     <div class="error-message-modern" id="termsError">
@@ -673,7 +640,7 @@
                     </div>
                     
                     <button type="submit" class="btn-auth-modern" id="registerBtn">
-                        <i class="bi bi-person-plus-fill me-2"></i> Create Account
+                        <span><i class="bi bi-person-plus-fill me-2"></i> Create Account</span>
                     </button>
                 </form>
             </div>
@@ -682,67 +649,31 @@
 </div>
 {% endblock %}
 
-<!-- Hidden element to pass Django data to JavaScript -->
-<div id="django-data" style="display: none;">
-    <script type="application/json">
-        {
-            "errors": {
-                "login": {
-                    {% if login_form.errors %}
-                        {% for field, errors in login_form.errors.items %}
-                        "{{ field }}": "{{ errors.0|escapejs }}"{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    {% endif %}
-                },
-                "register": {
-                    {% if register_form.errors %}
-                        {% for field, errors in register_form.errors.items %}
-                        "{{ field }}": "{{ errors.0|escapejs }}"{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    {% endif %}
-                }
-            },
-            "messages": [
-                {% if messages %}
-                    {% for message in messages %}
-                    { "message": "{{ message|escapejs }}", "isSuccess": {% if message.tags == 'success' %}true{% else %}false{% endif %} }{% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                {% endif %}
-            ]
-        }
-    </script>
-</div>
-
 {% block extra_js %}
 <script>
-    // Parse Django data from hidden element
-    try {
-        const djangoDataElement = document.getElementById('django-data');
-        if (djangoDataElement) {
-            const scriptElement = djangoDataElement.querySelector('script');
-            if (scriptElement) {
-                const jsonText = scriptElement.textContent.trim();
-                console.log('JSON text:', jsonText);
-                const djangoData = JSON.parse(jsonText);
-                window.djangoErrors = djangoData.errors;
-                window.djangoMessages = djangoData.messages;
-                console.log('Parsed data:', djangoData);
-            } else {
-                console.error('Script element not found in django-data');
+    // Get CSRF token from cookie
+    function getCsrfToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 'csrftoken'.length + 1) === ('csrftoken' + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring('csrftoken'.length + 1));
+                    break;
+                }
             }
-        } else {
-            console.error('django-data element not found');
         }
-    } catch (error) {
-        console.error('Error parsing Django data:', error);
+        return cookieValue;
     }
     
-    // Create floating particles
+    // Create floating particles (reduced count for performance)
     function createParticles() {
         const container = document.getElementById('particles');
         if (!container) return;
         
-        for (let i = 0; i < 50; i++) {
+        // Reduced to 20 particles for better performance
+        for (let i = 0; i < 20; i++) {
             const particle = document.createElement('div');
             particle.className = 'particle';
             const size = Math.random() * 6 + 2;
@@ -767,7 +698,19 @@
                 tab.classList.add('active');
                 forms.forEach(form => form.classList.remove('active'));
                 document.getElementById(`${target}Form`).classList.add('active');
+                
+                // Clear errors when switching tabs
+                clearAllErrors();
             });
+        });
+    }
+    
+    function clearAllErrors() {
+        document.querySelectorAll('.error-message-modern').forEach(el => {
+            el.classList.remove('show');
+        });
+        document.querySelectorAll('.input-field-modern').forEach(el => {
+            el.classList.remove('error');
         });
     }
     
@@ -833,87 +776,17 @@
         }
     }
     
-    // Real-time validation
-    function initRealTimeValidation() {
-        console.log('Initializing real-time validation');
-        
-        // Login form validation
-        const loginEmail = document.getElementById('loginEmail');
-        const loginPassword = document.getElementById('loginPassword');
-        const loginBtn = document.getElementById('loginBtn');
-        
-        console.log('Login elements found:', { loginEmail: !!loginEmail, loginPassword: !!loginPassword, loginBtn: !!loginBtn });
-        
-        if (loginEmail) {
-            loginEmail.addEventListener('input', function() {
-                console.log('Login email input event');
-                validateLoginForm();
-            });
-        }
-        if (loginPassword) {
-            loginPassword.addEventListener('input', function() {
-                console.log('Login password input event');
-                validateLoginForm();
-            });
-        }
-        
-        // Register form validation
-        const registerName = document.getElementById('registerName');
-        const registerEmail = document.getElementById('registerEmail');
-        const registerPassword = document.getElementById('registerPassword');
-        const registerConfirmPassword = document.getElementById('registerConfirmPassword');
-        const termsAgree = document.getElementById('termsAgree');
-        const registerBtn = document.getElementById('registerBtn');
-        
-        console.log('Register elements found:', { 
-            registerName: !!registerName, 
-            registerEmail: !!registerEmail, 
-            registerPassword: !!registerPassword, 
-            registerConfirmPassword: !!registerConfirmPassword, 
-            termsAgree: !!termsAgree, 
-            registerBtn: !!registerBtn 
-        });
-        
-        if (registerName) {
-            registerName.addEventListener('input', function() {
-                console.log('Register name input event');
-                validateRegisterForm();
-            });
-        }
-        if (registerEmail) {
-            registerEmail.addEventListener('input', function() {
-                console.log('Register email input event');
-                validateRegisterForm();
-            });
-        }
-        if (registerConfirmPassword) {
-            registerConfirmPassword.addEventListener('input', function() {
-                console.log('Register confirm password input event');
-                validateRegisterForm();
-            });
-        }
-        if (termsAgree) {
-            termsAgree.addEventListener('change', function() {
-                console.log('Terms agree change event');
-                validateRegisterForm();
-            });
-        }
-    }
-    
     function validateEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
     
     function validateLoginForm() {
-        console.log('Validating login form');
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
         const loginBtn = document.getElementById('loginBtn');
         const emailError = document.getElementById('loginEmailError');
         const passwordError = document.getElementById('loginPasswordError');
-        
-        console.log('Login form values:', { email, password: password ? '***' : '' });
         
         let isValid = true;
         
@@ -924,8 +797,14 @@
         document.getElementById('loginPassword').classList.remove('error');
         
         // Validate email
-        if (email && !validateEmail(email)) {
-            console.log('Invalid email format');
+        if (!email) {
+            if (emailError) {
+                emailError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Email is required';
+                emailError.classList.add('show');
+            }
+            document.getElementById('loginEmail').classList.add('error');
+            isValid = false;
+        } else if (!validateEmail(email)) {
             if (emailError) {
                 emailError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Invalid email format';
                 emailError.classList.add('show');
@@ -936,7 +815,6 @@
         
         // Validate password
         if (!password) {
-            console.log('Password is empty');
             if (passwordError) {
                 passwordError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Password is required';
                 passwordError.classList.add('show');
@@ -944,8 +822,6 @@
             document.getElementById('loginPassword').classList.add('error');
             isValid = false;
         }
-        
-        console.log('Login form valid:', isValid);
         
         // Enable/disable button
         if (loginBtn) {
@@ -957,21 +833,12 @@
     }
     
     function validateRegisterForm() {
-        console.log('Validating register form');
         const name = document.getElementById('registerName').value.trim();
         const email = document.getElementById('registerEmail').value.trim();
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
         const termsAgree = document.getElementById('termsAgree').checked;
         const registerBtn = document.getElementById('registerBtn');
-        
-        console.log('Register form values:', { 
-            name, 
-            email, 
-            password: password ? '***' : '', 
-            confirmPassword: confirmPassword ? '***' : '', 
-            termsAgree 
-        });
         
         const nameError = document.getElementById('registerNameError');
         const emailError = document.getElementById('registerEmailError');
@@ -995,7 +862,6 @@
         
         // Validate name
         if (!name) {
-            console.log('Name is empty');
             if (nameError) {
                 nameError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Name is required';
                 nameError.classList.add('show');
@@ -1006,7 +872,6 @@
         
         // Validate email
         if (!email) {
-            console.log('Email is empty');
             if (emailError) {
                 emailError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Email is required';
                 emailError.classList.add('show');
@@ -1014,7 +879,6 @@
             document.getElementById('registerEmail').classList.add('error');
             isValid = false;
         } else if (!validateEmail(email)) {
-            console.log('Invalid email format');
             if (emailError) {
                 emailError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Invalid email format';
                 emailError.classList.add('show');
@@ -1025,7 +889,6 @@
         
         // Validate password
         if (!password) {
-            console.log('Password is empty');
             if (passwordError) {
                 passwordError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Password is required';
                 passwordError.classList.add('show');
@@ -1033,7 +896,6 @@
             document.getElementById('registerPassword').classList.add('error');
             isValid = false;
         } else if (password.length < 6) {
-            console.log('Password too short');
             if (passwordError) {
                 passwordError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Password must be at least 6 characters';
                 passwordError.classList.add('show');
@@ -1044,7 +906,6 @@
         
         // Validate confirm password
         if (!confirmPassword) {
-            console.log('Confirm password is empty');
             if (confirmError) {
                 confirmError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Please confirm your password';
                 confirmError.classList.add('show');
@@ -1052,7 +913,6 @@
             document.getElementById('registerConfirmPassword').classList.add('error');
             isValid = false;
         } else if (password !== confirmPassword) {
-            console.log('Passwords do not match');
             if (confirmError) {
                 confirmError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Passwords do not match';
                 confirmError.classList.add('show');
@@ -1063,15 +923,12 @@
         
         // Validate terms
         if (!termsAgree) {
-            console.log('Terms not agreed');
             if (termsError) {
                 termsError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Please agree to the terms';
                 termsError.classList.add('show');
             }
             isValid = false;
         }
-        
-        console.log('Register form valid:', isValid);
         
         // Enable/disable button
         if (registerBtn) {
@@ -1082,79 +939,8 @@
         return isValid;
     }
     
-    // Show Django form errors
-    function showDjangoErrors() {
-        // Login form errors
-        if (window.djangoErrors.login && window.djangoErrors.login.username) {
-            const el = document.getElementById('loginEmailError');
-            if (el) {
-                el.classList.add('show');
-                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.login.username;
-            }
-            document.getElementById('loginEmail')?.classList.add('error');
-        }
-        if (window.djangoErrors.login && window.djangoErrors.login.password) {
-            const el = document.getElementById('loginPasswordError');
-            if (el) {
-                el.classList.add('show');
-                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.login.password;
-            }
-            document.getElementById('loginPassword')?.classList.add('error');
-        }
-        if (window.djangoErrors.login && window.djangoErrors.login.__all__) {
-            showToastMessage(window.djangoErrors.login.__all__, false);
-        }
-        
-        // Register form errors
-        if (window.djangoErrors.register && window.djangoErrors.register.first_name) {
-            const el = document.getElementById('registerNameError');
-            if (el) {
-                el.classList.add('show');
-                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.first_name;
-            }
-            document.getElementById('registerName')?.classList.add('error');
-        }
-        if (window.djangoErrors.register && window.djangoErrors.register.email) {
-            const el = document.getElementById('registerEmailError');
-            if (el) {
-                el.classList.add('show');
-                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.email;
-            }
-            document.getElementById('registerEmail')?.classList.add('error');
-        }
-        if (window.djangoErrors.register && window.djangoErrors.register.password1) {
-            const el = document.getElementById('registerPasswordError');
-            if (el) {
-                el.classList.add('show');
-                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.password1;
-            }
-            document.getElementById('registerPassword')?.classList.add('error');
-        }
-        if (window.djangoErrors.register && window.djangoErrors.register.password2) {
-            const el = document.getElementById('registerConfirmError');
-            if (el) {
-                el.classList.add('show');
-                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.password2;
-            }
-            document.getElementById('registerConfirmPassword')?.classList.add('error');
-        }
-        if (window.djangoErrors.register && window.djangoErrors.register.terms_agree) {
-            const el = document.getElementById('termsError');
-            if (el) {
-                el.classList.add('show');
-                el.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + window.djangoErrors.register.terms_agree;
-            }
-        }
-        
-        // Show Django messages
-        window.djangoMessages.forEach(function(msg) {
-            showToastMessage(msg.message, msg.isSuccess);
-        });
-    }
-    
-    // Show toast message function
+    // Show toast message
     function showToastMessage(message, isSuccess) {
-        if (isSuccess === undefined) isSuccess = true;
         const toast = document.getElementById('successToast');
         const toastMsg = document.getElementById('toastMessage');
         if (toast && toastMsg) {
@@ -1167,27 +953,192 @@
         }
     }
     
+    // Handle login
+    async function handleLogin(e) {
+        e.preventDefault();
+        
+        if (!validateLoginForm()) {
+            return;
+        }
+        
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const loginBtn = document.getElementById('loginBtn');
+        const originalText = loginBtn.querySelector('span').innerHTML;
+        
+        // Show loading state
+        loginBtn.disabled = true;
+        loginBtn.classList.add('loading');
+        
+        try {
+            const response = await fetch('/ajax/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToastMessage(data.message, true);
+                setTimeout(() => {
+                    window.location.href = data.redirect_url || '/dashboard/';
+                }, 1000);
+            } else {
+                showToastMessage(data.message, false);
+                // Show error on the form
+                const passwordError = document.getElementById('loginPasswordError');
+                if (passwordError) {
+                    passwordError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + data.message;
+                    passwordError.classList.add('show');
+                }
+                document.getElementById('loginPassword').classList.add('error');
+                loginBtn.disabled = false;
+                loginBtn.classList.remove('loading');
+                loginBtn.querySelector('span').innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showToastMessage('Network error. Please try again.', false);
+            loginBtn.disabled = false;
+            loginBtn.classList.remove('loading');
+            loginBtn.querySelector('span').innerHTML = originalText;
+        }
+    }
+    
+    // Handle register
+    async function handleRegister(e) {
+        e.preventDefault();
+        
+        if (!validateRegisterForm()) {
+            return;
+        }
+        
+        const name = document.getElementById('registerName').value.trim();
+        const email = document.getElementById('registerEmail').value.trim();
+        const phone = document.getElementById('registerPhone').value.trim();
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('registerConfirmPassword').value;
+        const registerBtn = document.getElementById('registerBtn');
+        const originalText = registerBtn.querySelector('span').innerHTML;
+        
+        // Show loading state
+        registerBtn.disabled = true;
+        registerBtn.classList.add('loading');
+        
+        try {
+            const response = await fetch('/ajax/register/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    password: password,
+                    confirm_password: confirmPassword,
+                    terms_agree: true
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToastMessage(data.message, true);
+                setTimeout(() => {
+                    window.location.href = data.redirect_url || '/dashboard/';
+                }, 1000);
+            } else {
+                showToastMessage(data.message, false);
+                
+                // Show field-specific errors
+                if (data.errors) {
+                    if (data.errors.name) {
+                        const nameError = document.getElementById('registerNameError');
+                        if (nameError) {
+                            nameError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + data.errors.name;
+                            nameError.classList.add('show');
+                        }
+                        document.getElementById('registerName').classList.add('error');
+                    }
+                    if (data.errors.email) {
+                        const emailError = document.getElementById('registerEmailError');
+                        if (emailError) {
+                            emailError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + data.errors.email;
+                            emailError.classList.add('show');
+                        }
+                        document.getElementById('registerEmail').classList.add('error');
+                    }
+                    if (data.errors.password) {
+                        const passwordError = document.getElementById('registerPasswordError');
+                        if (passwordError) {
+                            passwordError.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + data.errors.password;
+                            passwordError.classList.add('show');
+                        }
+                        document.getElementById('registerPassword').classList.add('error');
+                    }
+                }
+                
+                registerBtn.disabled = false;
+                registerBtn.classList.remove('loading');
+                registerBtn.querySelector('span').innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Register error:', error);
+            showToastMessage('Network error. Please try again.', false);
+            registerBtn.disabled = false;
+            registerBtn.classList.remove('loading');
+            registerBtn.querySelector('span').innerHTML = originalText;
+        }
+    }
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM Content Loaded - Initializing auth page');
         createParticles();
         initTabs();
         initStrengthMeter();
-        initRealTimeValidation();
-        showDjangoErrors();
         
-        // Initially disable buttons
-        const loginBtn = document.getElementById('loginBtn');
-        const registerBtn = document.getElementById('registerBtn');
-        if (loginBtn) {
-            loginBtn.disabled = true;
-            loginBtn.style.opacity = '0.6';
+        // Attach form handlers
+        const loginForm = document.getElementById('loginFormElement');
+        const registerForm = document.getElementById('registerFormElement');
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', handleLogin);
         }
-        if (registerBtn) {
-            registerBtn.disabled = true;
-            registerBtn.style.opacity = '0.6';
+        if (registerForm) {
+            registerForm.addEventListener('submit', handleRegister);
         }
-        console.log('Initialization complete');
+        
+        // Attach input handlers for real-time validation
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        
+        if (loginEmail) loginEmail.addEventListener('input', validateLoginForm);
+        if (loginPassword) loginPassword.addEventListener('input', validateLoginForm);
+        
+        const registerName = document.getElementById('registerName');
+        const registerEmail = document.getElementById('registerEmail');
+        const registerPassword = document.getElementById('registerPassword');
+        const registerConfirmPassword = document.getElementById('registerConfirmPassword');
+        const termsAgree = document.getElementById('termsAgree');
+        
+        if (registerName) registerName.addEventListener('input', validateRegisterForm);
+        if (registerEmail) registerEmail.addEventListener('input', validateRegisterForm);
+        if (registerPassword) registerPassword.addEventListener('input', validateRegisterForm);
+        if (registerConfirmPassword) registerConfirmPassword.addEventListener('input', validateRegisterForm);
+        if (termsAgree) termsAgree.addEventListener('change', validateRegisterForm);
+        
+        // Initially validate forms (buttons start disabled)
+        validateLoginForm();
+        validateRegisterForm();
     });
 </script>
 {% endblock %}

@@ -378,6 +378,25 @@
                 width: 100%;
             }
         }
+
+        .loading-spinner-sm {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #D35400;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .badge-status.updating {
+            opacity: 0.6;
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
@@ -2799,6 +2818,184 @@
                         showToast(d.message || 'Error updating profile', 'error');
                     }
                 });
+            });
+        }
+    });
+
+    // ==================== IMPROVEMENTS ====================
+
+    // Dynamic stats update
+    function updateDashboardStats() {
+        fetch('/api/stats/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.farm_count) {
+                    document.querySelectorAll('.farm-count-dynamic, .footer-farm-count').forEach(el => {
+                        if (el) el.textContent = data.farm_count;
+                    });
+                }
+                if (data.pizza_count) {
+                    document.querySelectorAll('.pizza-count-dynamic').forEach(el => {
+                        if (el) el.textContent = data.pizza_count;
+                    });
+                }
+            })
+            .catch(err => console.log('Error loading stats:', err));
+    }
+
+    // Improved order status update with animation
+    function updateOrderStatus(orderId, status) {
+        const select = document.querySelector(`.status-select[data-order-id="${orderId}"]`);
+        if (!select) return;
+        
+        const originalValue = select.value;
+        const row = select.closest('tr');
+        const statusBadge = row?.querySelector('.badge-status');
+        
+        select.disabled = true;
+        select.style.opacity = '0.6';
+        if (statusBadge) statusBadge.classList.add('updating');
+        
+        fetch('/admin-dashboard/order/' + orderId + '/status/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ status: status })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                if (statusBadge) {
+                    statusBadge.className = `badge-status badge-${status}`;
+                    const statusText = {
+                        'pending': 'Pending', 'confirmed': 'Confirmed', 'preparing': 'Preparing',
+                        'ready': 'Ready', 'completed': 'Completed', 'cancelled': 'Cancelled'
+                    }[status] || status;
+                    statusBadge.textContent = statusText;
+                    statusBadge.classList.remove('updating');
+                }
+                showToast(`Order status updated to ${status}`, 'success');
+            } else {
+                select.value = originalValue;
+                showToast(data.message || 'Error updating status', 'error');
+            }
+        })
+        .catch(() => {
+            select.value = originalValue;
+            showToast('Network error', 'error');
+        })
+        .finally(() => {
+            select.disabled = false;
+            select.style.opacity = '1';
+            if (statusBadge) statusBadge.classList.remove('updating');
+        });
+    }
+
+    // Improved image upload with loading state
+    function handleImageUpload(inputElement, previewElement, urlInputElement) {
+        const file = inputElement.files[0];
+        if (!file) return;
+        
+        const preview = document.getElementById(previewElement);
+        if (preview) {
+            preview.innerHTML = '<div class="loading-spinner-sm" style="margin: 0 auto;"></div>';
+        }
+        
+        if (!file.type.startsWith('image/')) {
+            showToast('Please select an image file', 'error');
+            inputElement.value = '';
+            if (preview) preview.innerHTML = '<span style="color: #6c757d;">No image selected</span>';
+            return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Image must be less than 5MB', 'error');
+            inputElement.value = '';
+            if (preview) preview.innerHTML = '<span style="color: #6c757d;">No image selected</span>';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '120px';
+            img.style.borderRadius = '8px';
+            img.style.objectFit = 'contain';
+            img.onload = function() {
+                if (preview) {
+                    preview.innerHTML = '';
+                    preview.appendChild(img);
+                }
+                if (urlInputElement) {
+                    document.getElementById(urlInputElement).value = '';
+                }
+            };
+        };
+        reader.onerror = function() {
+            showToast('Error reading file', 'error');
+            inputElement.value = '';
+            if (preview) preview.innerHTML = '<span style="color: #6c757d;">No image selected</span>';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Improved live hours preview
+    function updateHoursPreviewLive() {
+        const preview = document.getElementById('hoursPreview');
+        if (!preview) return;
+        
+        const rows = document.querySelectorAll('#hoursTableBody tr[data-day]');
+        const dayMap = {monday:'Monday', tuesday:'Tuesday', wednesday:'Wednesday', thursday:'Thursday', friday:'Friday', saturday:'Saturday', sunday:'Sunday'};
+        
+        let html = '<div class="row">';
+        rows.forEach(row => {
+            const day = row.dataset.day;
+            const dayDisplay = dayMap[day];
+            const isClosed = row.querySelector('.closed-check')?.checked;
+            const openTime = row.querySelector('.open-time')?.value || '';
+            const closeTime = row.querySelector('.close-time')?.value || '';
+            const note = row.querySelector('.note-input')?.value || '';
+            
+            if (isClosed) {
+                html += `<div class="col-md-6 mb-2"><span style="color: #999;">❌ ${dayDisplay}: Closed${note ? ' - ' + note : ''}</span></div>`;
+            } else if (openTime && closeTime) {
+                html += `<div class="col-md-6 mb-2"><span style="color: #28a745;">🟢 ${dayDisplay}:</span> <strong>${openTime} – ${closeTime}</strong>${note ? `<br><small class="text-muted">${note}</small>` : ''}</div>`;
+            } else {
+                html += `<div class="col-md-6 mb-2"><span style="color: #999;">⚠️ ${dayDisplay}: Not set</span></div>`;
+            }
+        });
+        html += '</div>';
+        preview.innerHTML = html || '<p class="text-muted">No hours set</p>';
+    }
+
+    // Call updateDashboardStats on DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDashboardStats();
+        addExportButton();
+        
+        // Override hours preview function
+        window.updateHoursPreview = updateHoursPreviewLive;
+        
+        // Override image upload handlers
+        const pizzaImageUpload = document.getElementById('pizzaImageUpload');
+        if (pizzaImageUpload) {
+            pizzaImageUpload.addEventListener('change', function() {
+                handleImageUpload(this, 'pizzaImagePreview', 'pizzaImageUrl');
+            });
+        }
+        
+        const pairingImageUpload = document.getElementById('pairingImageUpload');
+        if (pairingImageUpload) {
+            pairingImageUpload.addEventListener('change', function() {
+                handleImageUpload(this, 'pairingImagePreview', 'pizzaPairingImage');
+            });
+        }
+        
+        const menuItemImageUpload = document.getElementById('menuItemImageUpload');
+        if (menuItemImageUpload) {
+            menuItemImageUpload.addEventListener('change', function() {
+                handleImageUpload(this, 'menuItemImagePreview', 'menuItemImageUrl');
             });
         }
     });
