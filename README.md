@@ -53,10 +53,8 @@ EMBER-ROOT/
 
 ## 🚀 Quick Start
 
-### 1. Clone & create virtual environment
+### 1. Create virtual environment
 ```bash
-git clone https://github.com/Wai-Phyoe-Min/EMBER-ROOT.git
-cd EMBER-ROOT
 python -m venv venv
 source venv/bin/activate                    # Windows: venv\Scripts\activate
 ```
